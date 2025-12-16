@@ -1,70 +1,74 @@
 #!/usr/bin/env python3
 """
-统一的文档构建脚本 - 治本方案
+通用 Mermaid 图表构建工具
+
 功能：
-  1. 提取 Markdown 中的 Mermaid 代码块
-  2. 使用本地 mmdc 生成高质量 PNG（2000px 宽，3x scale）
-  3. 自动更新飞书版本 Markdown
-  4. 一键完成所有操作
+  - 支持任意 Markdown 文档
+  - 自动提取并生成高质量流程图
+  - 智能命名和目录管理
+  - 支持批量处理
 
 依赖：
-  - npm install -g @mermaid-js/mermaid-cli
+  npm install -g @mermaid-js/mermaid-cli
 
 使用：
-  python scripts/build.py
+  # 处理单个文档
+  python scripts/build.py doc/LangChain1.0深度学习指南.md
+  
+  # 批量处理
+  python scripts/build.py doc/*.md
+  
+  # 处理所有文档
+  python scripts/build.py --all
 """
 
 import re
 import subprocess
+import sys
+import argparse
 from pathlib import Path
 import hashlib
 import tempfile
+from typing import List, Tuple
 
-# 配置
+# GitHub 配置（用于生成图片 URL）
 GITHUB_REPO = "wangsc02/lessoning-ai"
 GITHUB_BRANCH = "main"
-SOURCE_FILE = "doc/LangChain1.0深度学习指南.md"
-OUTPUT_FILE = "doc/LangChain1.0深度学习指南_feishu.md"
-IMAGE_DIR = Path("doc/images")
 
-# Mermaid CLI 配置（高质量输出）
-MERMAID_CONFIG = {
-    "theme": "default",
-    "themeVariables": {
-        "fontSize": "16px",
-        "fontFamily": "Arial, sans-serif"
-    },
-    "flowchart": {
-        "nodeSpacing": 50,
-        "rankSpacing": 50,
-        "curve": "basis"
-    }
-}
+# 统一图片目录
+IMAGES_DIR = Path("doc/images")
 
-def check_mmdc():
+def check_mmdc() -> bool:
     """检查 mmdc 是否已安装"""
     try:
         result = subprocess.run(['mmdc', '--version'], 
                               capture_output=True, text=True, timeout=5)
-        print(f"✅ mmdc 已安装: {result.stdout.strip()}\n")
+        version = result.stdout.strip()
+        print(f"✅ mmdc 已安装: {version}\n")
         return True
     except FileNotFoundError:
         print("❌ 错误：mmdc 未安装")
-        print("请运行: npm install -g @mermaid-js/mermaid-cli")
+        print("安装方法: npm install -g @mermaid-js/mermaid-cli\n")
         return False
     except Exception as e:
-        print(f"❌ 检查 mmdc 失败: {e}")
+        print(f"❌ 检查 mmdc 失败: {e}\n")
         return False
 
-def extract_mermaid_blocks(md_file):
+def extract_mermaid_blocks(md_file: Path) -> Tuple[List[dict], str]:
     """提取所有 Mermaid 代码块"""
-    content = Path(md_file).read_text(encoding='utf-8')
-    pattern = r'```mermaid\n(.*?)```'
+    try:
+        content = md_file.read_text(encoding='utf-8')
+    except Exception as e:
+        print(f"❌ 读取文件失败: {e}")
+        return [], ""
     
+    pattern = r'```mermaid\n(.*?)```'
     blocks = []
+    
     for i, match in enumerate(re.finditer(pattern, content, re.DOTALL), 1):
         code = match.group(1).strip()
         code_hash = hashlib.md5(code.encode()).hexdigest()[:8]
+        
         blocks.append({
             'index': i,
             'code': code,
@@ -74,7 +78,25 @@ def extract_mermaid_blocks(md_file):
     
     return blocks, content
 
-def generate_diagram(mermaid_code, output_path):
+def get_image_filename(doc_name: str, index: int, code_hash: str) -> str:
+    """
+    生成图片文件名
+    格式: {文档名缩写}_{序号}_{哈希}.png
+    例如: langchain_1_abc123.png
+    """
+    # 提取文档名（去掉路径和扩展名）
+    doc_base = Path(doc_name).stem
+    
+    # 简化文档名（转小写，去掉特殊字符）
+    doc_prefix = re.sub(r'[^a-z0-9]+', '_', doc_base.lower())
+    
+    # 限制长度
+    if len(doc_prefix) > 20:
+        doc_prefix = doc_prefix[:20]
+    
+    return f"{doc_prefix}_{index}_{code_hash}.png"
+
+def generate_diagram(mermaid_code: str, output_path: Path) -> bool:
     """使用 mmdc 生成高质量图片"""
     # 创建临时 .mmd 文件
     with tempfile.NamedTemporaryFile(mode='w', suffix='.mmd', 
@@ -83,46 +105,43 @@ def generate_diagram(mermaid_code, output_path):
         temp_mmd = f.name
     
     try:
-        # 调用 mmdc 生成图片
-        # -w 2000: 宽度 2000px
-        # -s 3: 3倍缩放（高清）
-        # -b transparent: 透明背景
+        # 调用 mmdc
         cmd = [
             'mmdc',
             '-i', temp_mmd,
             '-o', str(output_path),
-            '-w', '2000',
-            '-s', '3',
-            '-b', 'transparent'
+            '-w', '2000',          # 宽度 2000px
+            '-s', '3',             # 3倍缩放
+            '-b', 'transparent'    # 透明背景
         ]
         
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         
         if result.returncode == 0 and output_path.exists():
             size = output_path.stat().st_size
-            print(f"  ✅ 成功 ({size:,} bytes)")
+            print(f"    ✅ 成功 ({size:,} bytes)")
             return True
         else:
-            print(f"  ❌ 失败: {result.stderr}")
+            print(f"    ❌ 失败: {result.stderr}")
             return False
             
     except subprocess.TimeoutExpired:
-        print(f"  ❌ 超时")
+        print(f"    ❌ 超时")
         return False
     except Exception as e:
-        print(f"  ❌ 错误: {e}")
+        print(f"    ❌ 错误: {e}")
         return False
     finally:
-        # 清理临时文件
         Path(temp_mmd).unlink(missing_ok=True)
 
-def build_feishu_version(blocks, original_content):
+def build_feishu_version(blocks: List[dict], original_content: str, 
+                        doc_name: str) -> str:
     """构建飞书版本的 Markdown"""
     new_content = original_content
     
     for block in blocks:
         i = block['index']
-        img_name = f"diagram_{i}_{block['hash']}.png"
+        img_name = get_image_filename(doc_name, i, block['hash'])
         github_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_BRANCH}/doc/images/{img_name}"
         
         # 替换内容
@@ -140,62 +159,119 @@ def build_feishu_version(blocks, original_content):
     
     return new_content
 
-def main():
-    print("=" * 60)
-    print("统一构建脚本 - 生成高质量流程图")
-    print("=" * 60)
-    print()
+def process_document(doc_path: Path) -> bool:
+    """处理单个文档"""
+    print(f"\n{'='*60}")
+    print(f"📄 处理文档: {doc_path}")
+    print(f"{'='*60}\n")
     
-    # 检查工具
-    if not check_mmdc():
-        return
+    # 检查文件是否存在
+    if not doc_path.exists():
+        print(f"❌ 文件不存在: {doc_path}\n")
+        return False
     
-    # 读取源文件
-    print(f"📖 读取: {SOURCE_FILE}")
-    blocks, original_content = extract_mermaid_blocks(SOURCE_FILE)
-    print(f"   找到 {len(blocks)} 个 Mermaid 图表\n")
+    # 提取 Mermaid 代码块
+    blocks, original_content = extract_mermaid_blocks(doc_path)
     
     if not blocks:
-        print("❌ 没有找到 Mermaid 代码块")
-        return
+        print(f"ℹ️  未找到 Mermaid 代码块，跳过\n")
+        return True
+    
+    print(f"📊 找到 {len(blocks)} 个 Mermaid 图表\n")
     
     # 创建图片目录
-    IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     
     # 生成图片
     print("🎨 生成高质量图片（2000px 宽，3x scale）\n")
     success_count = 0
+    doc_name = doc_path.stem
     
     for block in blocks:
         i = block['index']
-        img_name = f"diagram_{i}_{block['hash']}.png"
-        img_path = IMAGE_DIR / img_name
+        img_name = get_image_filename(doc_name, i, block['hash'])
+        img_path = IMAGES_DIR / img_name
         
-        print(f"图表 {i}: {img_name}")
+        print(f"  [{i}/{len(blocks)}] {img_name}")
+        
         if generate_diagram(block['code'], img_path):
             success_count += 1
-        print()
     
     # 生成飞书版本
     if success_count > 0:
-        print(f"📝 生成飞书版本: {OUTPUT_FILE}")
-        feishu_content = build_feishu_version(blocks, original_content)
-        Path(OUTPUT_FILE).write_text(feishu_content, encoding='utf-8')
+        output_file = doc_path.parent / f"{doc_path.stem}_feishu.md"
+        print(f"\n📝 生成飞书版本: {output_file}")
+        
+        feishu_content = build_feishu_version(blocks, original_content, doc_name)
+        output_file.write_text(feishu_content, encoding='utf-8')
         print(f"   ✅ 完成\n")
     
     # 总结
-    print("=" * 60)
-    print(f"✅ 成功生成 {success_count}/{len(blocks)} 个高质量图表")
-    print(f"📁 图片目录: {IMAGE_DIR.absolute()}")
-    print(f"📄 飞书版本: {OUTPUT_FILE}")
-    print()
-    print("后续步骤：")
-    print("  1. git add doc/images/ doc/*_feishu.md")
-    print("  2. git commit -m 'docs: 更新高质量流程图'")
-    print("  3. git push")
-    print("  4. 复制飞书版本到飞书文档")
-    print("=" * 60)
+    print(f"✅ 成功生成 {success_count}/{len(blocks)} 个图表")
+    
+    return success_count == len(blocks)
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='通用 Mermaid 图表构建工具',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  # 处理单个文档
+  python scripts/build.py doc/LangChain1.0深度学习指南.md
+  
+  # 处理多个文档
+  python scripts/build.py doc/LangChain*.md doc/Agent*.md
+  
+  # 处理所有文档
+  python scripts/build.py --all
+        """
+    )
+    
+    parser.add_argument('files', nargs='*', help='要处理的 Markdown 文件')
+    parser.add_argument('--all', action='store_true', help='处理 doc/ 目录下所有 .md 文件')
+    
+    args = parser.parse_args()
+    
+    # 检查工具
+    if not check_mmdc():
+        sys.exit(1)
+    
+    # 确定要处理的文件
+    if args.all:
+        doc_files = list(Path('doc').glob('*.md'))
+    elif args.files:
+        doc_files = [Path(f) for f in args.files]
+    else:
+        print("❌ 请指定要处理的文件或使用 --all\n")
+        parser.print_help()
+        sys.exit(1)
+    
+    # 过滤掉 _feishu.md 文件
+    doc_files = [f for f in doc_files if not f.stem.endswith('_feishu')]
+    
+    if not doc_files:
+        print("❌ 没有找到要处理的文件\n")
+        sys.exit(1)
+    
+    print(f"\n🚀 准备处理 {len(doc_files)} 个文档\n")
+    
+    # 处理所有文档
+    success_count = 0
+    for doc_file in doc_files:
+        if process_document(doc_file):
+            success_count += 1
+    
+    # 最终总结
+    print(f"\n{'='*60}")
+    print(f"🎉 完成！成功处理 {success_count}/{len(doc_files)} 个文档")
+    print(f"📁 图片目录: {IMAGES_DIR.absolute()}")
+    print(f"\n后续步骤：")
+    print(f"  1. git add doc/images/ doc/*_feishu.md")
+    print(f"  2. git commit -m 'docs: 更新流程图'")
+    print(f"  3. git push")
+    print(f"  4. 导入飞书版本到飞书文档")
+    print(f"{'='*60}\n")
 
 if __name__ == '__main__':
     main()
-
