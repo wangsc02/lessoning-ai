@@ -80,7 +80,7 @@ Agent = 概率输出引擎（LLM） + 确定性约束系统（状态机 + 策略
 
 ### 3.1 最小可运行的 Loop
 
-![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__1_d77efb64.png)
+![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/1_d77efb64.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -125,7 +125,7 @@ sequenceDiagram
 
 很多人觉得 Agent 是"自由发挥"的，但实际上生产级 Agent 更像一个**有限状态机（FSM）+ LLM 做路由**：
 
-![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__2_cdf3a1b9.png)
+![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/2_cdf3a1b9.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -174,7 +174,7 @@ stateDiagram-v2
 
 **核心思想**：每一步先推理（Reason）再行动（Act），形成"思考→工具→观察→再思考"的循环。
 
-![流程图 3](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__3_21a07d0a.png)
+![流程图 3](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/3_21a07d0a.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -232,7 +232,7 @@ def react_agent(question, tools, max_steps=10):
 
 **核心思想**：先让 LLM 生成完整计划，再逐步执行，避免"边走边看"的不确定性。
 
-![流程图 4](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__4_f42f115b.png)
+![流程图 4](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/4_f42f115b.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -298,7 +298,7 @@ def plan_and_execute(task, tools):
 
 **核心思想**：先生成初稿，再让 LLM 自我批评，迭代改进。
 
-![流程图 5](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__5_c2c18490.png)
+![流程图 5](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/5_c2c18490.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -362,7 +362,7 @@ def multi_agent_reflection(task):
 
 **核心思想**：不是线性推理，而是生成多个候选路径，评估后选择最优分支，支持回溯。
 
-![流程图 6](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__6_ab13de57.png)
+![流程图 6](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/6_ab13de57.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -646,7 +646,7 @@ def transactional_workflow(steps):
 
 ### 3.5.5 架构模式选择决策树
 
-![流程图 7](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__7_bc24b2bb.png)
+![流程图 7](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/7_bc24b2bb.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -691,7 +691,7 @@ graph TD
 
 #### 完整架构图
 
-![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__8_ec1acc1c.png)
+![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/8_ec1acc1c.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -945,7 +945,7 @@ class LLMProvider(ABC):
 
 #### 选型决策树
 
-![流程图 9](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__9_0d415223.png)
+![流程图 9](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/9_0d415223.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -1434,7 +1434,7 @@ def validate_output(output, rules_db):
 
 ### 7.2 完整流程图
 
-![流程图 10](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__10_63a711bc.png)
+![流程图 10](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/10_63a711bc.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -1538,7 +1538,7 @@ def code_review_agent(pr_url, budget):
 
 ### 8.2 架构：确定性路由 + Agent 填充
 
-![流程图 11](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__11_e57a0386.png)
+![流程图 11](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/11_e57a0386.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -1776,7 +1776,7 @@ def call_external_api(api, args):
 
 ### 12.1 六问决策树
 
-![流程图 12](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent__12_c2f956ed.png)
+![流程图 12](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/agent_/12_c2f956ed.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
