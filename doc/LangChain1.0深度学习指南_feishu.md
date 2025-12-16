@@ -227,7 +227,7 @@ LangGraph 把执行模型从“函数嵌套调用”升级成“显式状态机/
 
 在 Agent 里，最危险的不是模型偶尔说错，而是控制流失控：无限循环、工具风暴、预算爆炸、不可审计输出。LangGraph 的价值是把控制流画出来，并让每一步都有可观测与可恢复的边界。
 
-![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_2.png)
+![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_2_8f0cafeb.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -413,7 +413,7 @@ out = safe.invoke({"input": "..."})
 
 你可以用一张图把这三类组合讲清楚：
 
-![流程图 4](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_4.png)
+![流程图 4](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_4_3c9bc81c.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -464,7 +464,7 @@ LangChain 1.0 的消息系统核心不在“角色有几种”，而在于：它
 
 把它画成一次 ReAct 循环的消息流，会更直观：
 
-![流程图 5](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_5.png)
+![流程图 5](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_5_5c55a1bb.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -607,7 +607,7 @@ RAG 的真正目标不是“把知识塞给模型”，而是：
 
 #### 5.1.1 标准数据流
 
-![流程图 6](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_6.png)
+![流程图 6](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_6_b1dd614a.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -817,7 +817,7 @@ return partial_output(state, reason="MAX_STEPS_EXCEEDED")
 - **Handoff（接力）**：按阶段把任务交给不同角色（检索→分析→写作→校对）。  
 - **Broadcast/Map-Reduce**：并发生成候选，再聚合/投票/评估。
 
-![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_8.png)
+![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_8_ba6cda57.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
@@ -1162,7 +1162,7 @@ if len(collected_info) >= 10:   # 收集够 10 条关键信息就停
 
 可视化决策树（简化版）：
 
-![流程图 9](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_9.png)
+![流程图 9](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/doc/images/diagram_9_cfe7f852.png)
 
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
