@@ -27,6 +27,21 @@
 
 ## 🛠️ 维护流程
 
+### 🚀 一键自动发布（推荐）
+
+在 Cursor IDE 中使用自动化 Command：
+
+1. 编辑文档（添加/修改 Markdown 或 Mermaid）
+2. 打开 Command Palette (`Cmd+Shift+P`)
+3. 搜索并运行 `auto-deploy-docs`
+4. 自动完成：检测 Mermaid → 生成图片 → 提交 → 推送 → 验证
+
+**优势**：
+- ✅ 自动检测是否需要生成图片
+- ✅ 智能生成 commit message
+- ✅ 验证推送成功
+- ✅ 显示 GitHub 链接
+
 ### 编辑现有文档
 
 ```bash
