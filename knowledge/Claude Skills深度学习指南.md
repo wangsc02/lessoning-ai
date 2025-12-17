@@ -486,45 +486,66 @@ python3 tools/knowledge_publisher.py --publish
 ❌ 需要本地工具支持
 ```
 
-**如果用 Claude Skill 实现**：
+**如果改用 Skill + Tool 方式（而非 Command）**：
+
+**核心差异**：不是"能不能用 Tool"，而是**触发和编排方式不同**
+
 ```markdown
+# 方案对比
+
+## Cursor Command 方式（当前实现）
+触发：IDE 命令面板
+执行：Shell 脚本 → 调用 Python Tool
+特点：IDE 集成，一键执行，路径固定
+
+## Skill + Tool 方式（如果用 Skill）
+触发：自然语言对话（"帮我发布文档"）
+执行：AI（遵循 Skill 指导）→ 调用相同的 Python Tool
+特点：更灵活，跨平台，可以根据上下文调整
+
 ---
-name: knowledge-publisher
-description: 指导如何发布知识文档到 GitHub
+name: knowledge-publisher-skill
+description: 指导如何智能发布知识文档
 ---
 
 # Knowledge Publisher Skill
 
-## Publishing Checklist
-1. **检查文档质量**
-   - 确保 Mermaid 图表语法正确
-   - 检查 Markdown 格式
-   - 验证链接有效性
+## Pre-publish Analysis
+在调用发布 Tool 之前，我要：
+1. **分析修改内容**
+   - 识别文档类型（新增/更新/修复）
+   - 评估修改重要性
+   - 检查是否有敏感信息
 
-2. **生成 Commit Message**
-   - 分析修改内容
-   - 遵循 Conventional Commits 规范
-   - 格式：`<type>: <description>`
+2. **决策是否发布**
+   - ✅ 正常情况：直接调用 Tool 发布
+   - ⚠️ 有警告：提示用户确认
+   - ❌ 有严重问题：建议先修复
 
-3. **验证步骤**
-   - Git status 检查
-   - 推送前的最后确认
-   - 推送后验证
+## Tool Usage
+使用 `publish_knowledge_tool()` 执行实际发布
 
-## Output Format
-生成标准化的操作指令...
+## Post-publish Actions
+- 验证推送成功
+- 生成发布摘要
+- 建议后续改进
 ```
 
-**特点**：
-```
-✅ 跨平台使用（任何有 Claude 的地方）
-✅ 指导人工或 AI 完成发布流程
-✅ 易于修改和分享
+**对比**：
 
-❌ 无法直接执行 Git 操作
-❌ 需要人工或工具辅助执行
-❌ 不能自动化文件操作
-```
+| 维度 | Cursor Command | Skill + Tool |
+|---|---|---|
+| 触发方式 | IDE 命令面板 | 自然语言对话 |
+| 执行环境 | 仅 Cursor IDE | 任何支持 Claude + Tool 的环境 |
+| 智能决策 | 无（固定流程） | 有（Skill 提供判断逻辑）|
+| 灵活性 | 低（固定路径）| 高（可根据上下文调整）|
+| 便捷性 | 高（一键执行）| 中（需对话触发）|
+
+**重要澄清**：
+- ✅ Skill **可以**指导 AI 调用 Tool
+- ✅ Skill + Tool 组合 **可以**自动化执行
+- ❌ Skill **不能**直接操作文件系统（需通过 Tool）
+- 💡 **核心区别**：Command = 固定自动化；Skill = 智能编排
 
 #### 案例2：代码审查
 
@@ -566,21 +587,40 @@ description: 按照团队规范审查代码质量
 ### 本质差异总结
 
 **关键区别**：
+
 ```
-Cursor Command = IDE Automation（自动化执行）
-├─ 能做什么：操作文件、运行命令、调用工具
-├─ 限制：只在 Cursor 中可用
+Cursor Command = IDE Automation（固定自动化）
+├─ 本质：Shell/JS 脚本，IDE 执行
+├─ 能做：操作文件、运行命令、调用工具
+├─ 限制：只在 Cursor 中可用，流程固定
 └─ 类比：给 IDE 写的"宏"或"脚本"
 
-Claude Skill = AI Knowledge（知识指导）
-├─ 能做什么：指导 AI 思考、判断、输出
-├─ 限制：不能直接操作系统
-└─ 类比：给 AI 的"工作手册"或"SOP"
+Claude Skill = AI Knowledge（智能编排）
+├─ 本质：Markdown 指令，指导 AI 行为
+├─ 能做：指导 AI 思考、判断、调用 Tool
+├─ 限制：Skill 本身不能直接操作系统（需通过 Tool）
+└─ 类比：给 AI 的"工作手册"+"决策树"
 ```
 
+**重要澄清**：
+
+❌ **错误理解**：Skill 只能"指导人工"，不能自动化  
+✅ **正确理解**：Skill 可以指导 AI 调用 Tool 实现自动化
+
+**完整对比**：
+
+| 维度 | Command 方式 | Skill + Tool 方式 |
+|---|---|---|
+| 谁在控制流程？ | Shell 脚本 | AI（受 Skill 指导）|
+| 能否调用 Tool？ | 能 | 能 |
+| 能否智能决策？ | 不能（固定流程）| 能（Skill 提供逻辑）|
+| 触发方式 | IDE 命令 | 自然语言 |
+| 跨平台性 | 低（限 Cursor）| 高（任何 Claude）|
+
 **两者可以互补**：
-- Cursor Command 调用 Skill：用 Command 获取代码 → 激活 Skill 分析 → Command 应用修改
-- Skill 指导 Command 开发：用 Skill 定义审查标准 → Command 自动化执行
+- **Command 调用 Skill**：用 Command 获取代码 → 激活 Skill 分析 → Command 应用修改
+- **Skill 指导 Tool 使用**：Skill 定义审查标准 → AI 调用 Tool 执行检查 → 基于结果生成报告
+- **最佳组合**：Command（便捷入口）+ Tool（执行能力）+ Skill（智能决策）
 
 ### 选择指南
 
