@@ -1531,11 +1531,6 @@ def get_user_by_id(user_id: int) -> Optional[dict]:
 
 **交互流程图**：
 
-![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/claude_skills_/1_99124c1d.png)
-
-<details>
-<summary>📝 查看/编辑 Mermaid 源码</summary>
-
 ![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/claude_skills_/2_99124c1d.png)
 
 <details>
@@ -1561,8 +1556,6 @@ sequenceDiagram
     else 问题较轻
         AI->>User: 生成改进建议报告
     end```
-
-</details>
 
 </details>
 
