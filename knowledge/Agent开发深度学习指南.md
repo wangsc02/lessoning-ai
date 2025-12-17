@@ -112,7 +112,8 @@ sequenceDiagram
     else give_up
       R-->>U: {"status": "partial", "reason": "..."}
     end
-  end```
+  end
+```
 
 </details>
 
@@ -149,7 +150,8 @@ stateDiagram-v2
   Retry --> ToolCall: 重试
   Downgrade --> Answer: 部分结果
   NeedHuman --> [*]: 人工介入
-  Answer --> [*]: 完成```
+  Answer --> [*]: 完成
+```
 
 </details>
 
@@ -191,7 +193,8 @@ sequenceDiagram
   LLM->>Tools: Action
   Tools-->>LLM: Observation
   LLM->>LLM: Thought: "已收集足够信息"
-  LLM->>LLM: Final Answer```
+  LLM->>LLM: Final Answer
+```
 
 </details>
 
@@ -258,7 +261,8 @@ sequenceDiagram
     end
   end
   
-  E-->>U: final_result```
+  E-->>U: final_result
+```
 
 </details>
 
@@ -309,7 +313,8 @@ graph TD
   B --> C{是否满足标准?}
   C -->|否| D[根据批评改进]
   D --> A
-  C -->|是| E[输出终稿]```
+  C -->|是| E[输出终稿]
+```
 
 </details>
 
@@ -377,7 +382,8 @@ graph TD
   B3 --> C3[评分: 9/10]
   C3 --> D1[深入思路3 - 分支A]
   C3 --> D2[深入思路3 - 分支B]
-  D1 --> E[最终答案]```
+  D1 --> E[最终答案]
+```
 
 </details>
 
@@ -670,7 +676,8 @@ graph TD
   
   I --> J[+状态管理]
   J --> K[+错误处理]
-  K --> L[完整架构]```
+  K --> L[完整架构]
+```
 
 </details>
 
@@ -768,7 +775,8 @@ graph TD
   
   LOOP --> TRACE
   LOOP --> METRICS
-  LOOP --> LOGGER```
+  LOOP --> LOGGER
+```
 
 </details>
 
@@ -966,7 +974,8 @@ graph TD
   H -->|.NET/C#| J[Semantic Kernel]
   
   I -->|是| K[自研<br/>参考LangGraph]
-  I -->|否| L[Haystack<br/>或LangChain]```
+  I -->|否| L[Haystack<br/>或LangChain]
+```
 
 </details>
 
@@ -1462,7 +1471,8 @@ sequenceDiagram
   end
   
   A->>A: aggregate_report() [确定性]
-  A->>GH: post_comment(report)```
+  A->>GH: post_comment(report)
+```
 
 </details>
 
@@ -1558,7 +1568,8 @@ stateDiagram-v2
   
   AutoRoute --> [*]: 自动分配
   HumanConfirm --> [*]: 推荐 + 等待确认
-  HumanReview --> [*]: 全人工处理```
+  HumanReview --> [*]: 全人工处理
+```
 
 </details>
 
@@ -1805,7 +1816,8 @@ graph TD
   B --> Q6
   Q6 -->|是| M[+Memory淘汰]
   Q6 -->|否| DONE[完成架构设计]
-  M --> DONE```
+  M --> DONE
+```
 
 </details>
 
