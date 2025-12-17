@@ -34,12 +34,17 @@ Knowledge (知识层) → knowledge/        （知识库）
 
 ### 包含的 Skills
 
-| Skill | 功能 | 调用的 Tool | 状态 |
-|-------|------|------------|------|
-| `publish-knowledge` | 发布知识到 GitHub | `knowledge_publisher.py` | ✅ |
-| `generate-learning-doc` | 生成 AI Agent 学习文档 | AI + Templates | ✅ |
-| `render-diagrams` | 独立渲染流程图 | `knowledge_publisher.py` | 🔜 计划中 |
-| `validate-knowledge` | 验证知识文档质量 | Linter + AI | 🔜 计划中 |
+| Skill | 功能 | Skill 代码 | Tool 实现 | 状态 |
+|-------|------|-----------|----------|------|
+| `publish-knowledge` | 发布知识到 GitHub | 6 行 | `knowledge_publisher.py` (567 行) | ✅ |
+| `generate-learning-doc` | 生成 AI Agent 学习文档 | - | AI + Templates | ✅ |
+| `render-diagrams` | 独立渲染流程图 | - | `knowledge_publisher.py` | 🔜 计划中 |
+| `validate-knowledge` | 验证知识文档质量 | - | Linter + AI | 🔜 计划中 |
+
+**架构亮点**：
+- ✅ Skill 极简（仅 6 行核心代码）：只负责调用 Tool
+- ✅ Tool 完整（567 行）：包含所有业务逻辑（Git、Mermaid、图片生成、提交推送）
+- ✅ 职责分离：声明式 Skill + 命令式 Tool
 
 ### 当前 Tools
 
@@ -237,4 +242,3 @@ python --version  # >= 3.7
 ## 📄 License
 
 MIT
-测试说明：修改 README，触发完整发布流程
