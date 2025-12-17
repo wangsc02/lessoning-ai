@@ -1,17 +1,60 @@
 # Claude Skills 深度学习指南 - 能力模块化的新范式
 
+## TL;DR
+
+**这篇文档会用“官方定义 + 可落地的工程实践”讲清楚：Claude Skills 到底是什么、和 Tools / Cursor Commands 有什么本质差异、什么时候该用哪一种。**你可以把它当成一份“选型与落地手册”：读完能直接写出可复用的 `SKILL.md`，也能在 Cursor 里用命令把团队工作流标准化。
+
+## 官方定义与证据（先读）
+
+### Claude Skills（Anthropic 官方仓库）
+
+官方仓库对 Skills 的定义（节选）：
+
+> Skills are folders of instructions, scripts, and resources that Claude loads dynamically to improve performance on specialized tasks.
+
+以及对最小结构的定义（节选）：
+
+> Skills are simple to create - just a folder with a `SKILL.md` file containing YAML frontmatter and instructions.  
+> The frontmatter requires only two fields: `name`, `description`.
+
+来源：
+- `https://raw.githubusercontent.com/anthropics/skills/main/README.md`
+
+### Cursor Commands（Cursor 官方文档）
+
+Cursor 文档对“命令”的定义（节选）：
+
+> 自定义命令可让你创建可复用的工作流，并在聊天输入框中使用简单的 `/` 前缀触发。
+
+以及对存放位置与发现方式的定义（节选）：
+
+> 命令以纯 Markdown 文件定义，可存放在三个位置：项目命令（`.cursor/commands`）、全局命令（`~/.cursor/commands`）、团队命令（Dashboard）。  
+> 当你在聊天输入框中输入 `/` 时，Cursor 会自动检测并显示来自所有位置的可用命令。
+
+来源：
+- `https://cursor.com/cn/docs/agent/chat/commands`
+
+### 延伸阅读（官方）
+
+- Anthropic Support：What are skills? `https://support.claude.com/en/articles/12512176-what-are-skills`
+- Anthropic Support：Using skills in Claude `https://support.claude.com/en/articles/12512180-using-skills-in-claude`
+- Anthropic Support：Creating custom skills `https://support.claude.com/en/articles/12512198-creating-custom-skills`
+- Anthropic Engineering：Equipping agents for the real world with Agent Skills `https://anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills`
+
 ## 目录
-1. [Skills 的本质与定位](#skills的本质与定位)
-2. [Skills vs Tools：核心差异](#skills-vs-tools核心差异)
-3. [Skills vs Cursor Commands：核心差异](#skills-vs-cursor-commands核心差异)
-4. [Skills 的独特价值](#skills的独特价值)
-5. [Skill 文件结构](#skill文件结构)
-6. [⚡️ 5分钟快速上手](#5分钟快速上手)
-7. [典型应用场景](#典型应用场景)
-8. [🛠️ 调试与优化](#调试与优化)
-9. [最佳实践](#最佳实践)
-10. [技术演进与未来](#技术演进与未来)
-11. [❓ FAQ与自我挑战](#faq与自我挑战)
+- [TL;DR](#tldr)
+- [官方定义与证据（先读）](#官方定义与证据先读)
+- [Skills 的本质与定位](#skills的本质与定位)
+- [Skills vs Tools：核心差异](#skills-vs-tools核心差异)
+- [Skills vs Cursor Commands：核心差异](#skills-vs-cursor-commands核心差异)
+- [Skills 的独特价值](#skills的独特价值)
+- [Skill 文件结构](#skill文件结构)
+- [⚡️ 5分钟快速上手](#5分钟快速上手)
+- [典型应用场景](#典型应用场景)
+- [🛠️ 调试与优化](#调试与优化)
+- [最佳实践](#最佳实践)
+- [技术演进与未来](#技术演进与未来)
+- [❓ FAQ与自我挑战](#faq与自我挑战)
 
 ---
 
@@ -19,7 +62,7 @@
 
 ### 什么是 Skills？
 
-**Claude Skills 是一种封装领域知识和工作流程的指令系统**，让 AI 能够以专业、一致的方式完成特定任务。
+**Claude Skills 是一组“指令 +（可选）脚本/资源”的能力模块**（官方描述为：*folders of instructions, scripts, and resources that Claude loads dynamically*），用于让 Claude 在特定任务上更稳定、可重复地表现。
 
 ```
 传统方式：
@@ -87,8 +130,8 @@ graph TB
   → *赋予他“专业性”和“流程感”。*
 - **Tools (办公设备)**：你给他的电脑、电话、数据库权限。让他能真正查数据、发邮件。
   → *赋予他“行动力”和“外部感知”。*
-- **Cursor Commands (手把手教学)**：你直接握着他的手操作鼠标。
-  → *物理层面的接管，效率最高但缺乏灵活性。*
+- **Cursor Commands（可复用命令/工作流入口）**：你给他一组“快捷口令”（在 Cursor 里用 `/` 触发），把常见任务的提示模板标准化。
+  → *更像“可复用的提示词工作流入口”，是否能进一步执行到文件/终端，取决于 Cursor Agent 的工具权限与配置。*
 
 ### 概念对比
 
@@ -96,7 +139,7 @@ graph TB
 |---|---|---|
 | 本质 | 指令和知识 | 可执行函数 |
 | 作用 | 指导"如何做" | 实现"去执行" |
-| 载体 | 自然语言(Markdown) | 代码(API) |
+| 载体 | `SKILL.md`（Markdown 指令）+ 可选脚本/资源 | 代码(API/函数) |
 | 激活方式 | 上下文注入 | 函数调用 |
 | 修改难度 | 低(改文档) | 高(改代码+部署) |
 | 运行环境 | 模型内部 | 外部系统 |
@@ -425,28 +468,30 @@ Tools：
 
 ### 对比维度
 
-| 维度 | Claude Skills | Cursor Commands |
+> 说明：这部分尽量只陈述“官方可验证的事实”，其余与具体 IDE/模型/权限相关的行为会明确写前提，避免再出现“我猜的差异”。  
+> - Claude Skills 官方定义：`https://raw.githubusercontent.com/anthropics/skills/main/README.md`  
+> - Cursor Commands 官方定义：`https://cursor.com/cn/docs/agent/chat/commands`
+
+| 维度 | Claude Skills（Anthropic） | Cursor Commands（Cursor） |
 |---|---|---|
-| 核心定位 | AI 的"思考指南" | IDE 的"自动化脚本" |
-| 作用方式 | 影响 AI 推理过程 | 执行文件/系统操作 |
-| 触发方式 | 自然语言/显式激活 | 命令面板/快捷键 |
-| 执行环境 | AI 模型内部 | IDE + Shell |
-| 可移植性 | 高(跨平台/跨工具) | 低(限 Cursor IDE) |
-| 编写方式 | Markdown 指令 | Markdown + Shell/JS |
-| 学习曲线 | 中(需理解 AI 机制) | 低-中(看复杂度) |
-| 协作分享 | 强(纯文本文件) | 中(需环境一致) |
+| 官方定义的载体 | **文件夹**：指令 + 脚本 + 资源（Claude 动态加载） | **纯 Markdown 文件**（命令内容） |
+| 最小结构 | `SKILL.md`（YAML frontmatter + instructions） | `.md` 文件（Markdown 内容） |
+| 必要元数据 | frontmatter 至少包含 `name`、`description` | 官方文档未要求 YAML frontmatter（项目可自定义约定） |
+| 触发/发现方式 | Claude 动态加载并按需使用（具体策略以产品实现为准） | 在聊天输入框输入 `/` → 自动列出命令 → 选择执行 |
+| 存放位置（官方） | 仓库/插件/上传到 Claude（不同形态的分发） | 项目：`.cursor/commands`；全局：`~/.cursor/commands`；团队：Dashboard |
+| 稳定性提示（官方） | （以 Anthropic 文档为准） | **命令目前为测试版**（官方文档提示后续可能变化） |
+| 是否“能执行到系统” | **需要 Tool/Agent 能力**（Skill 自身是指令/资源，不直接改系统） | **取决于 Cursor Agent 工具权限**（Command 本身是提示内容；能否编辑/终端由环境决定） |
+| 典型用途 | 复用专业 SOP、标准、领域知识；跨环境一致 | 在 Cursor 内把常见任务做成可复用工作流入口；团队共享 |
 
 ### 关键差异：作用对象不同
 
 **Claude Skills**：
-- 作用于 **AI 的思考和输出**
-- 不直接操作文件系统或外部工具
-- 指导 AI "如何思考、如何判断、如何输出"
+- 作用于 **Claude 的行为方式**：以“指令 +（可选）脚本/资源”的形式，提升特定任务的可重复性与一致性
+- **边界**：Skill 本身不是“执行引擎”，要产生外部副作用（写文件/调用 API）仍需 Tool/Agent 执行能力
 
 **Cursor Commands**：
-- 作用于 **IDE 和文件系统**
-- 可以直接读写文件、执行命令
-- 自动化"打开文件、修改代码、提交 Git"等操作
+- 作用于 **Cursor Agent 聊天中的命令入口**：用 `/` 前缀触发，把提示内容复用化
+- **边界**：Command 本质上是 Markdown 内容；真正“能不能操作文件/终端”，取决于 Cursor Agent 的工具与权限配置（而不是 Command 文件本身）
 
 ### 实际案例对比
 
@@ -474,6 +519,8 @@ cd /Users/wangsc/Agent/lessoning-ai
 python3 tools/knowledge_publisher.py --publish
 ```
 
+> 注：`description/globs` 这类 frontmatter 字段是**本项目的工程约定**（用于管理与匹配），Cursor 官方 Commands 文档的最低要求是“纯 Markdown 文件 + `/` 触发”。
+
 **特点**：
 ```
 ✅ 一键执行完整发布流程
@@ -494,7 +541,7 @@ python3 tools/knowledge_publisher.py --publish
 # 方案对比
 
 ## Cursor Command 方式（当前实现）
-触发：IDE 命令面板
+触发：在 Cursor 聊天中输入 `/publish-knowledge`（或从 `/` 列表选择）
 执行：Shell 脚本 → 调用 Python Tool
 特点：IDE 集成，一键执行，路径固定
 
@@ -533,19 +580,19 @@ description: 指导如何智能发布知识文档
 
 **对比**：
 
-| 维度 | Cursor Command | Skill + Tool |
+| 维度 | Cursor Command（在 Cursor 内） | Claude Skill + Tool（在 Claude/任意集成内） |
 |---|---|---|
-| 触发方式 | IDE 命令面板 | 自然语言对话 |
-| 执行环境 | 仅 Cursor IDE | 任何支持 Claude + Tool 的环境 |
-| 智能决策 | 无（固定流程） | 有（Skill 提供判断逻辑）|
-| 灵活性 | 低（固定路径）| 高（可根据上下文调整）|
-| 便捷性 | 高（一键执行）| 中（需对话触发）|
+| 触发方式（官方） | 聊天框输入 `/` 触发命令 | 使用 Skill（例如在请求中提及该 skill）+ 调用 Tool |
+| 执行环境 | Cursor Agent（能力取决于权限/工具） | Claude（能力取决于你接入的 Tool） |
+| 复用与分发 | 项目/全局/团队命令（官方支持团队同步） | 以技能包/插件/上传技能等方式分发（形态视产品） |
+| 智能决策 | ✅ 可以（命令内容是提示模板，模型可推理） | ✅ 可以（Skill 给出决策逻辑） |
+| 便捷性 | 高（Cursor 内 `/` 快速触发） | 中（取决于你接入环境的入口设计） |
 
 **重要澄清**：
 - ✅ Skill **可以**指导 AI 调用 Tool
 - ✅ Skill + Tool 组合 **可以**自动化执行
 - ❌ Skill **不能**直接操作文件系统（需通过 Tool）
-- 💡 **核心区别**：Command = 固定自动化；Skill = 智能编排
+- 💡 **核心区别更准确的说法**：Command 是 Cursor 内的“可复用命令入口”；Skill 是 Claude 的“可复用能力包（指令+资源）”。两者都能推理与调用工具，差异在**产品的封装/分发/触发语义**与**可携带的资源形态**。
 
 #### 案例2：代码审查
 
@@ -589,19 +636,19 @@ description: 按照团队规范审查代码质量
 **关键区别**：
 
 ```
-Cursor Command = Task Execution（任务执行）
-├─ 本质：用户触发的一次性任务
-├─ 能做：执行脚本、AI 分析、调用工具
-├─ 特点：明确、一次性、任务导向
-├─ 限制：只在 Cursor IDE 中可用
-└─ 类比：给助手布置一个任务
+Cursor Command = Chat Command（聊天命令入口）
+├─ 本质：在 Cursor 聊天中用 `/` 显式触发的命令模板
+├─ 能做：把常见任务的提示内容标准化（模型仍可推理/可调用工具，取决于权限）
+├─ 特点：显式触发、团队可同步、入口很快
+├─ 限制：运行在 Cursor 生态内
+└─ 类比：给团队统一的“快捷口令/工作流入口”
 
-Claude Skill = Capability Grant（能力赋予）
-├─ 本质：赋予 AI 的持久性专业能力
-├─ 能做：影响 AI 思考方式、调用 Tool
-├─ 特点：持久、自动激活、能力导向
-├─ 限制：Skill 本身不能直接操作系统（需通过 Tool）
-└─ 类比：培训助手成为某领域专家
+Claude Skill = Skill Package（技能包/能力模块）
+├─ 本质：Claude 可动态加载的“指令 +（可选）脚本/资源”能力包
+├─ 能做：提升特定任务的可重复性与一致性（执行仍需 Tool/Agent 能力）
+├─ 特点：可复用、可组合、可携带资源（scripts/resources）
+├─ 限制：Skill 本身不是执行引擎（外部副作用依赖 Tool/Agent）
+└─ 类比：把专家 SOP 和配套资源打包成可复用模块
 ```
 
 **重要澄清**：
@@ -613,10 +660,10 @@ Claude Skill = Capability Grant（能力赋予）
 
 | 维度 | Cursor Command | Claude Skill |
 |---|---|---|
-| **本质** | 一次性任务 | 持久性能力 |
-| **生命周期** | 触发 → 执行 → 结束 | 一直影响 AI 行为 |
-| **激活方式** | 用户明确选择执行 | 自动激活（描述匹配）|
-| **设计意图** | "做一件事"（task-oriented）| "会一项技能"（capability-oriented）|
+| **本质** | 聊天命令入口（Markdown 命令模板） | 技能包（指令 +（可选）脚本/资源） |
+| **触发方式（官方）** | `/` 前缀显式触发 | 可在请求中提及 skill（具体集成也可能提供自动选择） |
+| **存放/分发（官方）** | 项目/全局/团队（Dashboard） | 仓库/插件/上传技能（形态随产品） |
+| **设计意图** | 在 Cursor 内复用工作流入口 | 在 Claude 侧复用专业 SOP + 资源 |
 | **是否可以有 AI 决策？** | ✅ 可以 | ✅ 可以 |
 | **是否可以调用 Tool？** | ✅ 可以 | ✅ 可以 |
 | **跨平台性** | 低（限 Cursor IDE）| 高（任何 Claude）|
@@ -624,15 +671,13 @@ Claude Skill = Capability Grant（能力赋予）
 **关键差异说明**：
 
 ```
-Command = "执行一个任务"
-示例：用户选择 "审查当前文件"
-流程：触发 → AI 审查一次 → 结束
-特点：明确、一次性、任务导向
+Command = "在 Cursor 聊天里提供一个可复用入口"
+示例：输入 `/review`（命令内容是提示模板）
+特点：显式触发、团队共享、入口快
 
-Skill = "赋予 AI 一项专业能力"
-示例：激活 "代码审查专家" Skill
-效果：之后所有代码讨论，AI 都以专家视角回答
-特点：持久、自动、能力导向
+Skill = "在 Claude 侧提供一个可复用能力包"
+示例：在请求里提及 code-reviewer skill（或由集成自动选用）
+特点：可携带 SOP/示例/资源；更像“模块化能力”
 ```
 
 **实际使用场景示例**：
