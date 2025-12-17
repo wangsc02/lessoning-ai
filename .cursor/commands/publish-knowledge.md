@@ -48,11 +48,6 @@ echo -e "${YELLOW}📋 步骤 2/5: 检测 Mermaid 代码块${NC}"
 # 检查 Knowledge Base 中是否有包含 mermaid 的文档
 NEED_BUILD=false
 for doc in knowledge/*.md; do
-    # 跳过 _feishu.md 文件
-    if [[ $doc == *"_feishu.md" ]]; then
-        continue
-    fi
-    
     if [ -f "$doc" ] && grep -q '\`\`\`mermaid' "$doc"; then
         echo -e "${GREEN}✅ 发现 Mermaid: $(basename $doc)${NC}"
         NEED_BUILD=true
@@ -82,14 +77,14 @@ echo ""
 echo -e "${YELLOW}📋 步骤 4/5: 准备提交${NC}"
 
 # 分析修改类型
-DOC_MODIFIED=$(git status --short | grep -E '^\s*M\s+knowledge/.*\.md$' | grep -v '_feishu.md' | wc -l | tr -d ' ')
-DOC_ADDED=$(git status --short | grep -E '^\s*A\s+knowledge/.*\.md$' | grep -v '_feishu.md' | wc -l | tr -d ' ')
+DOC_MODIFIED=$(git status --short | grep -E '^\s*M\s+knowledge/.*\.md$' | wc -l | tr -d ' ')
+DOC_ADDED=$(git status --short | grep -E '^\s*A\s+knowledge/.*\.md$' | wc -l | tr -d ' ')
 IMG_MODIFIED=$(git status --short | grep 'knowledge/images/' | wc -l | tr -d ' ')
 
 # 生成 commit message
 if [ "$DOC_ADDED" -gt 0 ]; then
     # 获取新增文档名
-    NEW_DOC=$(git status --short | grep -E '^\s*A\s+knowledge/.*\.md$' | grep -v '_feishu.md' | head -1 | awk '{print $2}' | xargs basename | sed 's/.md$//')
+    NEW_DOC=$(git status --short | grep -E '^\s*A\s+knowledge/.*\.md$' | head -1 | awk '{print $2}' | xargs basename | sed 's/.md$//')
     COMMIT_MSG="docs: 添加知识 ${NEW_DOC}"
 elif [ "$DOC_MODIFIED" -gt 0 ] && [ "$IMG_MODIFIED" -gt 0 ]; then
     COMMIT_MSG="docs: 更新知识及流程图"

@@ -8,12 +8,12 @@ Knowledge Publisher - 知识发布工具
   - 提取 Markdown 中的 Mermaid 流程图
   - 生成高质量 PNG 图片（2000px，3x scale）
   - 按文档分子目录管理图片
-  - 生成飞书兼容版本
+  - 直接在原文档中替换 Mermaid 为图片链接（保留源码在折叠块）
   - 支持批量处理
 
 架构：
   Skill (Command) → Tool (此文件) → Knowledge Base
-  
+
 依赖：
   npm install -g @mermaid-js/mermaid-cli
 
@@ -26,6 +26,11 @@ Knowledge Publisher - 知识发布工具
 
   # 处理所有文档
   python tools/knowledge_publisher.py --all
+
+注意：
+  - 会直接修改原文档（Mermaid → 图片链接）
+  - 图片通过 GitHub Raw URL 引用
+  - 飞书导入后可直接显示图片
 """
 
 import re
@@ -90,7 +95,7 @@ def get_image_path(doc_name: str, index: int, code_hash: str) -> tuple[str, Path
     生成图片路径和相对路径
     目录结构: knowledge/images/{文档名}/{序号}_{哈希}.png
     例如: knowledge/images/langchain1/1_abc123.png
-    
+
     返回: (相对路径, 绝对路径)
     """
     # 提取文档名（去掉路径和扩展名）
@@ -163,10 +168,13 @@ def generate_diagram(mermaid_code: str, output_path: Path) -> bool:
         Path(temp_mmd).unlink(missing_ok=True)
 
 
-def build_feishu_version(
+def replace_mermaid_with_images(
     blocks: List[dict], original_content: str, doc_name: str
 ) -> str:
-    """构建飞书版本的 Markdown"""
+    """
+    将 Mermaid 代码块替换为图片链接 + 折叠的源码
+    直接修改原文档，不生成副本
+    """
     new_content = original_content
 
     for block in blocks:
@@ -174,7 +182,7 @@ def build_feishu_version(
         img_rel_path, _ = get_image_path(doc_name, i, block["hash"])
         github_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_BRANCH}/knowledge/images/{img_rel_path}"
 
-        # 替换内容
+        # 替换为：图片 + 折叠的源码
         replacement = f"""![流程图 {i}]({github_url})
 
 <details>
@@ -227,18 +235,17 @@ def process_document(doc_path: Path) -> bool:
         if generate_diagram(block["code"], img_abs_path):
             success_count += 1
 
-    # 生成飞书版本
+    # 替换原文档中的 Mermaid 代码块
     if success_count > 0:
-        output_file = doc_path.parent / f"{doc_path.stem}_feishu.md"
-        print(f"\n📝 生成飞书版本: {output_file}")
-
-        feishu_content = build_feishu_version(blocks, original_content, doc_name)
-        output_file.write_text(feishu_content, encoding="utf-8")
-        print(f"   ✅ 完成\n")
-
+        print(f"\n📝 更新原文档: {doc_path}")
+        
+        new_content = replace_mermaid_with_images(blocks, original_content, doc_name)
+        doc_path.write_text(new_content, encoding="utf-8")
+        print(f"   ✅ 已将 Mermaid 代码块替换为图片链接\n")
+    
     # 总结
     print(f"✅ 成功生成 {success_count}/{len(blocks)} 个图表")
-
+    
     return success_count == len(blocks)
 
 
@@ -261,7 +268,7 @@ def main():
 
     parser.add_argument("files", nargs="*", help="要处理的 Markdown 文件")
     parser.add_argument(
-        "--all", action="store_true", help="处理 doc/ 目录下所有 .md 文件"
+        "--all", action="store_true", help="处理 knowledge/ 目录下所有 .md 文件"
     )
 
     args = parser.parse_args()
@@ -280,9 +287,6 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    # 过滤掉 _feishu.md 文件
-    doc_files = [f for f in doc_files if not f.stem.endswith("_feishu")]
-
     if not doc_files:
         print("❌ 没有找到要处理的文件\n")
         sys.exit(1)
@@ -299,11 +303,13 @@ def main():
     print(f"\n{'='*60}")
     print(f"🎉 完成！成功处理 {success_count}/{len(doc_files)} 个文档")
     print(f"📁 图片根目录: {IMAGES_ROOT.absolute()}")
+    print(f"\n✅ 已更新原文档：")
+    print(f"  - Mermaid 代码块 → 图片链接 + 折叠源码")
+    print(f"  - 可直接复制到飞书，图片自动加载")
     print(f"\n后续步骤：")
-    print(f"  1. git add knowledge/images/ knowledge/*_feishu.md")
+    print(f"  1. git add knowledge/")
     print(f"  2. git commit -m 'docs: 更新流程图'")
     print(f"  3. git push")
-    print(f"  4. 导入飞书版本到飞书文档")
     print(f"{'='*60}\n")
 
 
