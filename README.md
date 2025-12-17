@@ -1,17 +1,25 @@
-# Lessoning AI - AI Agent 学习知识库
+# Lessoning AI - Learning Documentation Skill Package
 
-> 打造成 Skill 的学习资料生成与发布系统
+> AI Agent 学习文档生成与发布的 Skill 集合
 
 ## 🎯 项目定位
 
-这是一个基于 **Cursor Skills** 的知识管理系统，采用三层架构：
+这是一个 **Skill Package**（技能包），包含多个相关的独立 Skills。
+
+### 什么是 Skill Package？
+
+- **整个项目** = 一个 Skill Package（多个相关 Skills 的集合）
+- **每个 Command** = 一个独立的 Skill（可单独调用的能力单元）
+- **每个 Tool** = Skill 调用的工具实现
+
+### 三层架构
 
 ```
-Skills (能力层)    → .cursor/commands/
+Skills (能力层)    → .cursor/commands/  （每个 .md 是一个 Skill）
   ↓ 调用
-Tools (工具层)     → tools/
+Tools (工具层)     → tools/            （Python 工具实现）
   ↓ 操作
-Knowledge (知识层) → knowledge/
+Knowledge (知识层) → knowledge/        （知识库）
 ```
 
 ## 🏗️ 架构设计
@@ -24,12 +32,14 @@ Knowledge (知识层) → knowledge/
 | **Tools** | `tools/` | 具体功能实现 | External Tools |
 | **Knowledge** | `knowledge/` | 知识存储与索引 | Knowledge Base |
 
-### 当前 Skills
+### 包含的 Skills
 
-| Skill | 功能 | 调用的 Tool |
-|-------|------|------------|
-| `publish-knowledge` | 发布知识到 GitHub | `knowledge_publisher.py` |
-| `generate-learning-doc` | 生成 AI Agent 学习文档 | AI + Templates |
+| Skill | 功能 | 调用的 Tool | 状态 |
+|-------|------|------------|------|
+| `publish-knowledge` | 发布知识到 GitHub | `knowledge_publisher.py` | ✅ |
+| `generate-learning-doc` | 生成 AI Agent 学习文档 | AI + Templates | ✅ |
+| `render-diagrams` | 独立渲染流程图 | `knowledge_publisher.py` | 🔜 计划中 |
+| `validate-knowledge` | 验证知识文档质量 | Linter + AI | 🔜 计划中 |
 
 ### 当前 Tools
 
@@ -172,20 +182,41 @@ python --version  # >= 3.7
 
 ## 🎯 设计原则
 
-1. **Skill 化**：Cursor Commands 就是 Skills
-2. **工具化**：复杂逻辑封装为 Tools
-3. **知识化**：文档不是"doc"，是 Knowledge Base
-4. **可组合**：Skills 可以调用多个 Tools
-5. **可扩展**：新增 Skill/Tool 不影响现有功能
+1. **Skill Package 化**：
+   - 项目 = 一组相关的 Skills
+   - 每个 Command = 一个独立的 Skill
+   - Skills 可独立调用、可组合使用
+
+2. **职责单一**：
+   - 每个 Skill 只做一件事（发布、生成、验证...）
+   - 输入输出明确
+   - 可独立测试和维护
+
+3. **工具化**：
+   - 复杂逻辑封装为 Tools（Python 实现）
+   - Tools 可被多个 Skills 复用
+   - 保持 Skills 层的简洁性
+
+4. **知识化**：
+   - 文档不是"doc"，是 Knowledge Base
+   - 知识是资产，需要结构化管理
+   - 可被 Skills 读取和操作
+
+5. **可扩展**：
+   - 新增 Skill 不影响现有功能
+   - 新增 Tool 可被任意 Skill 调用
+   - 架构清晰，易于理解和贡献
 
 ## 💡 为什么这样设计？
 
-| 传统方案 | 本项目 | 优势 |
-|---------|--------|------|
-| `scripts/` | `tools/` | 明确是工具，不是临时脚本 |
-| `doc/` | `knowledge/` | 明确是知识库，不是普通文档 |
-| 手动脚本 | Cursor Skills | 集成到 IDE，一键调用 |
-| 混乱的流程 | 三层架构 | 清晰、可维护、可扩展 |
+| 维度 | 传统方案 | 本项目（Skill Package） | 优势 |
+|------|---------|----------------------|------|
+| **组织方式** | 一堆脚本 | Skill Package | 相关能力统一管理 |
+| **能力单元** | 脚本文件 | Skill（Command） | 输入输出明确，可独立调用 |
+| **工具实现** | `scripts/` | `tools/` | 明确是工具，不是临时脚本 |
+| **知识管理** | `doc/` | `knowledge/` | 明确是知识库，不是普通文档 |
+| **调用方式** | 命令行 | Cursor Command Palette | 集成到 IDE，一键调用 |
+| **架构清晰度** | 混乱 | 三层分离 | 清晰、可维护、可扩展 |
 
 ## 🔗 快速链接
 
