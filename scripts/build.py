@@ -84,7 +84,7 @@ def get_image_path(doc_name: str, index: int, code_hash: str) -> tuple[str, Path
     生成图片路径和相对路径
     目录结构: doc/images/{文档名}/{序号}_{哈希}.png
     例如: doc/images/langchain1/1_abc123.png
-    
+
     返回: (相对路径, 绝对路径)
     """
     # 提取文档名（去掉路径和扩展名）
@@ -99,16 +99,16 @@ def get_image_path(doc_name: str, index: int, code_hash: str) -> tuple[str, Path
 
     # 图片文件名（不含文档名前缀）
     img_filename = f"{index}_{code_hash}.png"
-    
+
     # 文档专属目录
     doc_dir = IMAGES_ROOT / doc_prefix
-    
+
     # 相对路径（用于 GitHub URL）
     rel_path = f"{doc_prefix}/{img_filename}"
-    
+
     # 绝对路径（用于本地保存）
     abs_path = doc_dir / img_filename
-    
+
     return rel_path, abs_path
 
 
@@ -212,7 +212,7 @@ def process_document(doc_path: Path) -> bool:
     for block in blocks:
         i = block["index"]
         img_rel_path, img_abs_path = get_image_path(doc_name, i, block["hash"])
-        
+
         # 创建文档专属目录
         img_abs_path.parent.mkdir(parents=True, exist_ok=True)
 
