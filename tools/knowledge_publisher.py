@@ -1,25 +1,31 @@
 #!/usr/bin/env python3
 """
-通用 Mermaid 图表构建工具
+Knowledge Publisher - 知识发布工具
+
+这是一个 Tool，被 Cursor Skills 调用，用于发布知识库到 GitHub。
 
 功能：
-  - 支持任意 Markdown 文档
-  - 自动提取并生成高质量流程图
-  - 智能命名和目录管理
+  - 提取 Markdown 中的 Mermaid 流程图
+  - 生成高质量 PNG 图片（2000px，3x scale）
+  - 按文档分子目录管理图片
+  - 生成飞书兼容版本
   - 支持批量处理
 
+架构：
+  Skill (Command) → Tool (此文件) → Knowledge Base
+  
 依赖：
   npm install -g @mermaid-js/mermaid-cli
 
 使用：
   # 处理单个文档
-  python scripts/build.py doc/LangChain1.0深度学习指南.md
+  python tools/knowledge_publisher.py knowledge/LangChain1.0深度学习指南.md
 
   # 批量处理
-  python scripts/build.py doc/*.md
+  python tools/knowledge_publisher.py knowledge/*.md
 
   # 处理所有文档
-  python scripts/build.py --all
+  python tools/knowledge_publisher.py --all
 """
 
 import re
@@ -36,7 +42,7 @@ GITHUB_REPO = "wangsc02/lessoning-ai"
 GITHUB_BRANCH = "main"
 
 # 图片根目录
-IMAGES_ROOT = Path("doc/images")
+IMAGES_ROOT = Path("knowledge/images")
 
 
 def check_mmdc() -> bool:
@@ -82,9 +88,9 @@ def extract_mermaid_blocks(md_file: Path) -> Tuple[List[dict], str]:
 def get_image_path(doc_name: str, index: int, code_hash: str) -> tuple[str, Path]:
     """
     生成图片路径和相对路径
-    目录结构: doc/images/{文档名}/{序号}_{哈希}.png
-    例如: doc/images/langchain1/1_abc123.png
-
+    目录结构: knowledge/images/{文档名}/{序号}_{哈希}.png
+    例如: knowledge/images/langchain1/1_abc123.png
+    
     返回: (相对路径, 绝对路径)
     """
     # 提取文档名（去掉路径和扩展名）
@@ -166,7 +172,7 @@ def build_feishu_version(
     for block in blocks:
         i = block["index"]
         img_rel_path, _ = get_image_path(doc_name, i, block["hash"])
-        github_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_BRANCH}/doc/images/{img_rel_path}"
+        github_url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{GITHUB_BRANCH}/knowledge/images/{img_rel_path}"
 
         # 替换内容
         replacement = f"""![流程图 {i}]({github_url})
@@ -266,7 +272,7 @@ def main():
 
     # 确定要处理的文件
     if args.all:
-        doc_files = list(Path("doc").glob("*.md"))
+        doc_files = list(Path("knowledge").glob("*.md"))
     elif args.files:
         doc_files = [Path(f) for f in args.files]
     else:
@@ -294,7 +300,7 @@ def main():
     print(f"🎉 完成！成功处理 {success_count}/{len(doc_files)} 个文档")
     print(f"📁 图片根目录: {IMAGES_ROOT.absolute()}")
     print(f"\n后续步骤：")
-    print(f"  1. git add doc/images/ doc/*_feishu.md")
+    print(f"  1. git add knowledge/images/ knowledge/*_feishu.md")
     print(f"  2. git commit -m 'docs: 更新流程图'")
     print(f"  3. git push")
     print(f"  4. 导入飞书版本到飞书文档")

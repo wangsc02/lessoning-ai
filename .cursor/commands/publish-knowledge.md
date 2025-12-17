@@ -1,16 +1,16 @@
 ---
-description: 自动化文档发布流程：检测 Mermaid → 生成图片 → 提交 Git → 验证推送
-globs: ["doc/**/*.md"]
+description: 发布知识到 GitHub：检测 Mermaid → 生成图片 → 提交 → 推送 → 验证
+globs: ["knowledge/**/*.md"]
 ---
 
-# 自动化文档发布
+# Skill: 发布知识 (Publish Knowledge)
 
-这个命令会自动：
-1. 检查 Git 状态和文档中的 Mermaid 代码
-2. 生成缺失的流程图
+这个 Skill 会自动调用 Tool 完成知识发布流程：
+1. 检查 Git 状态和 Knowledge Base 中的 Mermaid 代码
+2. 调用 `knowledge_publisher.py` 生成高清流程图
 3. 提交所有修改到 Git
 4. 推送到 GitHub
-5. 验证推送成功
+5. 验证推送成功并显示 URL
 
 ```bash
 #!/bin/bash
@@ -45,9 +45,9 @@ fi
 # 步骤 2: 检测是否需要生成图片
 echo -e "${YELLOW}📋 步骤 2/5: 检测 Mermaid 代码块${NC}"
 
-# 检查是否有包含 mermaid 的文档
+# 检查 Knowledge Base 中是否有包含 mermaid 的文档
 NEED_BUILD=false
-for doc in doc/*.md; do
+for doc in knowledge/*.md; do
     # 跳过 _feishu.md 文件
     if [[ $doc == *"_feishu.md" ]]; then
         continue
@@ -62,8 +62,8 @@ done
 # 步骤 3: 生成图片（如果需要）
 if [ "$NEED_BUILD" = true ]; then
     echo ""
-    echo -e "${YELLOW}📋 步骤 3/5: 生成高质量流程图${NC}"
-    if python3 scripts/build.py --all; then
+    echo -e "${YELLOW}📋 步骤 3/5: 调用 Tool 生成高质量流程图${NC}"
+    if python3 tools/knowledge_publisher.py --all; then
         echo ""
         echo -e "${GREEN}✅ 图片生成成功${NC}"
     else
@@ -82,23 +82,23 @@ echo ""
 echo -e "${YELLOW}📋 步骤 4/5: 准备提交${NC}"
 
 # 分析修改类型
-DOC_MODIFIED=$(git status --short | grep -E '^\s*M\s+doc/.*\.md$' | grep -v '_feishu.md' | wc -l | tr -d ' ')
-DOC_ADDED=$(git status --short | grep -E '^\s*A\s+doc/.*\.md$' | grep -v '_feishu.md' | wc -l | tr -d ' ')
-IMG_MODIFIED=$(git status --short | grep 'doc/images/' | wc -l | tr -d ' ')
+DOC_MODIFIED=$(git status --short | grep -E '^\s*M\s+knowledge/.*\.md$' | grep -v '_feishu.md' | wc -l | tr -d ' ')
+DOC_ADDED=$(git status --short | grep -E '^\s*A\s+knowledge/.*\.md$' | grep -v '_feishu.md' | wc -l | tr -d ' ')
+IMG_MODIFIED=$(git status --short | grep 'knowledge/images/' | wc -l | tr -d ' ')
 
 # 生成 commit message
 if [ "$DOC_ADDED" -gt 0 ]; then
     # 获取新增文档名
-    NEW_DOC=$(git status --short | grep -E '^\s*A\s+doc/.*\.md$' | grep -v '_feishu.md' | head -1 | awk '{print $2}' | xargs basename | sed 's/.md$//')
-    COMMIT_MSG="docs: 添加 ${NEW_DOC}"
+    NEW_DOC=$(git status --short | grep -E '^\s*A\s+knowledge/.*\.md$' | grep -v '_feishu.md' | head -1 | awk '{print $2}' | xargs basename | sed 's/.md$//')
+    COMMIT_MSG="docs: 添加知识 ${NEW_DOC}"
 elif [ "$DOC_MODIFIED" -gt 0 ] && [ "$IMG_MODIFIED" -gt 0 ]; then
-    COMMIT_MSG="docs: 更新文档及流程图"
+    COMMIT_MSG="docs: 更新知识及流程图"
 elif [ "$DOC_MODIFIED" -gt 0 ]; then
-    COMMIT_MSG="docs: 更新文档内容"
+    COMMIT_MSG="docs: 更新知识内容"
 elif [ "$IMG_MODIFIED" -gt 0 ]; then
     COMMIT_MSG="docs: 更新流程图"
 else
-    COMMIT_MSG="docs: 更新文档"
+    COMMIT_MSG="docs: 更新知识库"
 fi
 
 echo -e "${GREEN}📝 Commit Message: ${COMMIT_MSG}${NC}"
@@ -149,8 +149,8 @@ if git push; then
         echo -e "${GREEN}🔗 GitHub 链接：${NC}"
         echo -e "   https://github.com/wangsc02/lessoning-ai/commit/${LOCAL_HASH}"
         echo ""
-        echo -e "${GREEN}📁 查看所有文档：${NC}"
-        echo -e "   https://github.com/wangsc02/lessoning-ai/tree/main/doc"
+        echo -e "${GREEN}📁 查看 Knowledge Base：${NC}"
+        echo -e "   https://github.com/wangsc02/lessoning-ai/tree/main/knowledge"
         echo ""
     else
         echo ""
