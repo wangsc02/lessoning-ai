@@ -80,6 +80,11 @@ Agent = 概率输出引擎（LLM） + 确定性约束系统（状态机 + 策略
 
 ### 3.1 最小可运行的 Loop
 
+![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/1_d77efb64.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant U as User
@@ -107,8 +112,9 @@ sequenceDiagram
     else give_up
       R-->>U: {"status": "partial", "reason": "..."}
     end
-  end
-```
+  end```
+
+</details>
 
 **边界条件**：
 - **预算**：token、time、tool_call 次数任一超限 → 触发降级/中止
@@ -118,6 +124,11 @@ sequenceDiagram
 ### 3.2 状态机视角：Agent 的真实样子
 
 很多人觉得 Agent 是"自由发挥"的，但实际上生产级 Agent 更像一个**有限状态机（FSM）+ LLM 做路由**：
+
+![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/2_cdf3a1b9.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
 
 ```mermaid
 stateDiagram-v2
@@ -138,8 +149,9 @@ stateDiagram-v2
   Retry --> ToolCall: 重试
   Downgrade --> Answer: 部分结果
   NeedHuman --> [*]: 人工介入
-  Answer --> [*]: 完成
-```
+  Answer --> [*]: 完成```
+
+</details>
 
 **深刻认知**：越是生产级的 Agent，越会在关键节点**显式定义状态转移条件**（而不是完全交给 LLM 判断）。例如：
 - "连续 3 次工具调用失败" → 自动转 `NeedHuman` 状态
@@ -162,6 +174,11 @@ stateDiagram-v2
 
 **核心思想**：每一步先推理（Reason）再行动（Act），形成"思考→工具→观察→再思考"的循环。
 
+![流程图 3](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/3_21a07d0a.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant LLM
@@ -174,8 +191,9 @@ sequenceDiagram
   LLM->>Tools: Action
   Tools-->>LLM: Observation
   LLM->>LLM: Thought: "已收集足够信息"
-  LLM->>LLM: Final Answer
-```
+  LLM->>LLM: Final Answer```
+
+</details>
 
 **代码模板**：
 ```python (Pseudocode)
@@ -214,6 +232,11 @@ def react_agent(question, tools, max_steps=10):
 
 **核心思想**：先让 LLM 生成完整计划，再逐步执行，避免"边走边看"的不确定性。
 
+![流程图 4](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/4_f42f115b.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant U as User
@@ -235,8 +258,9 @@ sequenceDiagram
     end
   end
   
-  E-->>U: final_result
-```
+  E-->>U: final_result```
+
+</details>
 
 **代码模板**：
 ```python (Pseudocode)
@@ -274,14 +298,20 @@ def plan_and_execute(task, tools):
 
 **核心思想**：先生成初稿，再让 LLM 自我批评，迭代改进。
 
+![流程图 5](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/5_c2c18490.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[生成初稿] --> B[Reflection: 自我批评]
   B --> C{是否满足标准?}
   C -->|否| D[根据批评改进]
   D --> A
-  C -->|是| E[输出终稿]
-```
+  C -->|是| E[输出终稿]```
+
+</details>
 
 **代码模板**：
 ```python (Pseudocode)
@@ -332,6 +362,11 @@ def multi_agent_reflection(task):
 
 **核心思想**：不是线性推理，而是生成多个候选路径，评估后选择最优分支，支持回溯。
 
+![流程图 6](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/6_ab13de57.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[初始状态] --> B1[思路1]
@@ -342,8 +377,9 @@ graph TD
   B3 --> C3[评分: 9/10]
   C3 --> D1[深入思路3 - 分支A]
   C3 --> D2[深入思路3 - 分支B]
-  D1 --> E[最终答案]
-```
+  D1 --> E[最终答案]```
+
+</details>
 
 **伪代码**（简化版）：
 ```python (Pseudocode)
@@ -610,6 +646,11 @@ def transactional_workflow(steps):
 
 ### 3.5.5 架构模式选择决策树
 
+![流程图 7](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/7_bc24b2bb.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[开始] --> B{任务是否<br/>可预先分解?}
@@ -629,8 +670,9 @@ graph TD
   
   I --> J[+状态管理]
   J --> K[+错误处理]
-  K --> L[完整架构]
-```
+  K --> L[完整架构]```
+
+</details>
 
 **给新手的建议**：
 1. 先从 **Plan-and-Execute** 或 **ReAct** 起步（最通用）
@@ -648,6 +690,11 @@ graph TD
 ### 3.5.6 系统分层架构
 
 #### 完整架构图
+
+![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/8_ec1acc1c.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
 
 ```mermaid
 graph TD
@@ -721,8 +768,9 @@ graph TD
   
   LOOP --> TRACE
   LOOP --> METRICS
-  LOOP --> LOGGER
-```
+  LOOP --> LOGGER```
+
+</details>
 
 #### 各层职责
 
@@ -897,6 +945,11 @@ class LLMProvider(ABC):
 
 #### 选型决策树
 
+![流程图 9](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/9_0d415223.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[开始选型] --> B{是否需要<br/>多Agent协作?}
@@ -913,8 +966,9 @@ graph TD
   H -->|.NET/C#| J[Semantic Kernel]
   
   I -->|是| K[自研<br/>参考LangGraph]
-  I -->|否| L[Haystack<br/>或LangChain]
-```
+  I -->|否| L[Haystack<br/>或LangChain]```
+
+</details>
 
 #### 何时选择自研？
 
@@ -1380,6 +1434,11 @@ def validate_output(output, rules_db):
 
 ### 7.2 完整流程图
 
+![流程图 10](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/10_63a711bc.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant GH as GitHub PR
@@ -1403,8 +1462,9 @@ sequenceDiagram
   end
   
   A->>A: aggregate_report() [确定性]
-  A->>GH: post_comment(report)
-```
+  A->>GH: post_comment(report)```
+
+</details>
 
 ### 7.3 核心代码（伪代码，≤25行）
 
@@ -1478,6 +1538,11 @@ def code_review_agent(pr_url, budget):
 
 ### 8.2 架构：确定性路由 + Agent 填充
 
+![流程图 11](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/11_e57a0386.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 stateDiagram-v2
   [*] --> PreCheck
@@ -1493,8 +1558,9 @@ stateDiagram-v2
   
   AutoRoute --> [*]: 自动分配
   HumanConfirm --> [*]: 推荐 + 等待确认
-  HumanReview --> [*]: 全人工处理
-```
+  HumanReview --> [*]: 全人工处理```
+
+</details>
 
 **关键设计**：
 - **PreCheck（确定性）**：用正则/关键词先过滤高风险
@@ -1710,6 +1776,11 @@ def call_external_api(api, args):
 
 ### 12.1 六问决策树
 
+![流程图 12](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/12_c2f956ed.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[开始] --> Q1{路径是否<br/>可预先确定?}
@@ -1734,8 +1805,9 @@ graph TD
   B --> Q6
   Q6 -->|是| M[+Memory淘汰]
   Q6 -->|否| DONE[完成架构设计]
-  M --> DONE
-```
+  M --> DONE```
+
+</details>
 
 ### 12.2 灰度决策矩阵（不是非黑即白）
 

@@ -148,6 +148,11 @@ LangChain 1.0 的价值，恰恰是把这些“系统问题”显式化：用更
 
 下面这张图用非常粗的方式对比两代心智模型：0.x 更接近“线性 pipeline”，1.0 更接近“图执行 + 可恢复”。
 
+![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/1_49c518d7.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   subgraph v0x [v0x_LinearChain]
@@ -164,8 +169,9 @@ flowchart TD
     nodeB --> joinNode
     joinNode --> nodeC[Node_C_Runnable]
     nodeC --> v1_out[Output]
-  end
-```
+  end```
+
+</details>
 
 **边界条件**（避免过度概括）：
 - 如果你的链路始终是“短、线性、无并发、无恢复需求”，0.x 风格的线性拼装也能跑得很好，1.0 的运行时能力可能是“用不上但要学”。
@@ -221,6 +227,11 @@ LangGraph 把执行模型从“函数嵌套调用”升级成“显式状态机/
 
 在 Agent 里，最危险的不是模型偶尔说错，而是控制流失控：无限循环、工具风暴、预算爆炸、不可审计输出。LangGraph 的价值是把控制流画出来，并让每一步都有可观测与可恢复的边界。
 
+![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/2_8f0cafeb.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 stateDiagram-v2
   [*] --> init
@@ -235,8 +246,9 @@ stateDiagram-v2
     [*] --> callTool
     callTool --> callModel
     callModel --> [*]
-  }
-```
+  }```
+
+</details>
 
 上面这张图故意简单化，但它强调了三件关键事实：
 - **状态是显式的**：你可以把“当前计划/工具结果/预算/证据”放在 state 里，而不是散落在闭包变量与日志里。
@@ -281,6 +293,11 @@ LangChain 1.0 的模块化拆分，表面上是“包更多了”，实质上是
 
 一个建议的分层心智模型如下：
 
+![流程图 3](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/3_2cf8d1f8.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   app[YourApp] --> lc[langchain]
@@ -293,8 +310,9 @@ flowchart TD
   community --> core
 
   app --> classic[langchain_classic]
-  classic --> core
-```
+  classic --> core```
+
+</details>
 
 为了避免把包名写死成某个单一版本，这里用更通用的描述（你可以把 `langchain_provider_packages` 理解为 `langchain-openai/langchain-anthropic/...` 这类厂商包）。
 
@@ -395,6 +413,11 @@ out = safe.invoke({"input": "..."})
 
 你可以用一张图把这三类组合讲清楚：
 
+![流程图 4](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/4_3c9bc81c.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   inNode[Input] --> seqA[Seq_A]
@@ -411,8 +434,9 @@ flowchart TD
   router --> path1[Path_1]
   router --> path2[Path_2]
   path1 --> out3[Output]
-  path2 --> out3
-```
+  path2 --> out3```
+
+</details>
 
 **工程建议**：在生产代码里明确区分“并发”和“并行”：
 - 并发强调“同一时间推进多个任务”（受限于 IO/配额），未必带来速度线性提升；
@@ -440,6 +464,11 @@ LangChain 1.0 的消息系统核心不在“角色有几种”，而在于：它
 
 把它画成一次 ReAct 循环的消息流，会更直观：
 
+![流程图 5](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/5_5c55a1bb.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant Human as Human
@@ -453,8 +482,9 @@ sequenceDiagram
   Agent->>Tool: tool_call(name,args)
   Tool-->>Agent: tool_result
   Agent->>Model: messages(+ToolMessage)
-  Model-->>Agent: final_answer
-```
+  Model-->>Agent: final_answer```
+
+</details>
 
 **边界条件**：
 - 如果你把工具结果当成普通文本拼回 prompt，你会失去“工具调用可审计/可回放”的结构；生产系统里建议把工具返回视为“第一等数据”，并落盘到 trace。
@@ -577,6 +607,11 @@ RAG 的真正目标不是“把知识塞给模型”，而是：
 
 #### 5.1.1 标准数据流
 
+![流程图 6](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/6_b1dd614a.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant User as User
@@ -592,8 +627,9 @@ sequenceDiagram
   Retriever-->>App: topk_docs
   App->>Model: prompt(question+contexts+citation_rules)
   Model-->>App: answer_with_citations
-  App-->>User: answer + sources
-```
+  App-->>User: answer + sources```
+
+</details>
 
 #### 5.1.2 最小可用骨架（伪代码）
 
@@ -729,6 +765,11 @@ Agent 的“强大”来自工具调用；Agent 的“风险”也来自工具�
 
 #### 5.2.1 一个受控 Agent 的最小闭环
 
+![流程图 7](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/7_da413455.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 stateDiagram-v2
   [*] --> plan
@@ -736,8 +777,9 @@ stateDiagram-v2
   callTool --> observe
   observe --> decide
   decide --> done
-  decide --> plan
-```
+  decide --> plan```
+
+</details>
 
 #### 5.2.2 工具治理的四条硬约束（建议直接落到代码/配置）
 
@@ -775,6 +817,11 @@ return partial_output(state, reason="MAX_STEPS_EXCEEDED")
 - **Handoff（接力）**：按阶段把任务交给不同角色（检索→分析→写作→校对）。  
 - **Broadcast/Map-Reduce**：并发生成候选，再聚合/投票/评估。
 
+![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/8_ba6cda57.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   sup[Supervisor] --> a1[Agent_Research]
@@ -783,8 +830,9 @@ flowchart TD
   a1 --> sup
   a2 --> sup
   a3 --> sup
-  sup --> out[Final]
-```
+  sup --> out[Final]```
+
+</details>
 
 #### 5.3.2 收敛性：多智能体的“隐形成本”
 
@@ -1114,6 +1162,11 @@ if len(collected_info) >= 10:   # 收集够 10 条关键信息就停
 
 可视化决策树（简化版）：
 
+![流程图 9](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/9_cfe7f852.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   q1["Need_State_Resume?"] -->|Yes| g1["Use_GraphRuntime"]
@@ -1121,8 +1174,9 @@ flowchart TD
   q2 -->|Yes| r1["Build_RAG_With_Citations"]
   q2 -->|No| q3["Need_Tools?"]
   q3 -->|Yes| a1["Agent_With_Governance"]
-  q3 -->|No| s1["Direct_Model_Call"]
-```
+  q3 -->|No| s1["Direct_Model_Call"]```
+
+</details>
 
 #### 灰度与验收（建议直接复用）
 

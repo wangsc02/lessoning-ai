@@ -26,7 +26,7 @@ Knowledge Publisher - 知识发布工具
 使用示例：
   # 完整发布流程（推荐，由 Skill 调用）
   python tools/knowledge_publisher.py --publish
-  
+
   # 仅生成图片（适合调试）
   python tools/knowledge_publisher.py --all
   python tools/knowledge_publisher.py knowledge/xxx.md
@@ -205,6 +205,7 @@ def replace_mermaid_with_images(
 
 # ==================== Git 操作函数 ====================
 
+
 def run_git_command(cmd: List[str], check: bool = True) -> Tuple[bool, str, str]:
     """运行 Git 命令并返回结果"""
     try:
@@ -221,14 +222,16 @@ def run_git_command(cmd: List[str], check: bool = True) -> Tuple[bool, str, str]
 def check_git_status() -> bool:
     """检查 Git 状态，返回是否有修改"""
     print("📋 步骤 1/5: 检查 Git 状态\n")
-    
+
     # 检查是否有修改（包括 staged 和 unstaged）
     success, stdout, _ = run_git_command(["git", "diff", "--quiet"], check=False)
     has_unstaged = not success
-    
-    success, stdout, _ = run_git_command(["git", "diff", "--cached", "--quiet"], check=False)
+
+    success, stdout, _ = run_git_command(
+        ["git", "diff", "--cached", "--quiet"], check=False
+    )
     has_staged = not success
-    
+
     if has_unstaged or has_staged:
         print("✅ 检测到文件修改\n")
         success, stdout, _ = run_git_command(["git", "status", "--short"])
@@ -242,7 +245,7 @@ def check_git_status() -> bool:
 def detect_mermaid_in_knowledge() -> List[Path]:
     """检测 Knowledge Base 中包含 Mermaid 的文档"""
     print("📋 步骤 2/5: 检测 Mermaid 代码块\n")
-    
+
     mermaid_docs = []
     for doc_path in Path("knowledge").glob("*.md"):
         try:
@@ -252,7 +255,7 @@ def detect_mermaid_in_knowledge() -> List[Path]:
                 mermaid_docs.append(doc_path)
         except Exception:
             continue
-    
+
     print()
     return mermaid_docs
 
@@ -262,14 +265,22 @@ def generate_commit_message() -> str:
     success, stdout, _ = run_git_command(["git", "status", "--short"])
     if not success:
         return "docs: 更新知识库"
-    
+
     lines = stdout.strip().split("\n")
-    
+
     # 分析修改类型
-    doc_modified = sum(1 for line in lines if line.strip().startswith("M") and "knowledge/" in line and ".md" in line)
-    doc_added = sum(1 for line in lines if line.strip().startswith("A") and "knowledge/" in line and ".md" in line)
+    doc_modified = sum(
+        1
+        for line in lines
+        if line.strip().startswith("M") and "knowledge/" in line and ".md" in line
+    )
+    doc_added = sum(
+        1
+        for line in lines
+        if line.strip().startswith("A") and "knowledge/" in line and ".md" in line
+    )
     img_modified = sum(1 for line in lines if "knowledge/images/" in line)
-    
+
     # 生成消息
     if doc_added > 0:
         # 获取新增文档名
@@ -277,76 +288,76 @@ def generate_commit_message() -> str:
             if line.strip().startswith("A") and "knowledge/" in line and ".md" in line:
                 doc_name = Path(line.split()[-1]).stem
                 return f"docs: 添加知识 {doc_name}"
-    
+
     if doc_modified > 0 and img_modified > 0:
         return "docs: 更新知识及流程图"
     elif doc_modified > 0:
         return "docs: 更新知识内容"
     elif img_modified > 0:
         return "docs: 更新流程图"
-    
+
     return "docs: 更新知识库"
 
 
 def commit_and_push(commit_msg: str) -> Tuple[bool, str]:
     """提交并推送到 GitHub"""
     print("📋 步骤 4/5: 提交并推送\n")
-    
+
     # 暂存所有修改
     print("📝 暂存修改...")
     success, _, stderr = run_git_command(["git", "add", "-A"])
     if not success:
         return False, f"暂存失败: {stderr}"
-    
+
     # 提交
     print(f"📝 Commit Message: {commit_msg}")
     success, _, stderr = run_git_command(["git", "commit", "-m", commit_msg])
     if not success:
         return False, f"提交失败: {stderr}"
-    
+
     print("✅ 提交成功\n")
-    
+
     # 获取本地 commit hash
     success, local_hash, _ = run_git_command(["git", "rev-parse", "HEAD"])
     if not success:
         return False, "无法获取 commit hash"
-    
+
     local_hash = local_hash.strip()
     print(f"本地 Commit: {local_hash[:7]}")
-    
+
     # 推送
     print("正在推送...")
     success, _, stderr = run_git_command(["git", "push"])
     if not success:
         return False, f"推送失败: {stderr}"
-    
+
     print("✅ 推送命令执行成功\n")
-    
+
     return True, local_hash
 
 
 def verify_push(local_hash: str) -> bool:
     """验证推送是否成功"""
     print("📋 步骤 5/5: 验证推送\n")
-    
+
     # 等待远程更新
     time.sleep(1)
-    
+
     # 拉取最新信息
     print("正在验证...")
     success, _, _ = run_git_command(["git", "fetch", "origin", "main", "--quiet"])
     if not success:
         print("⚠️  无法验证推送状态\n")
         return False
-    
+
     # 获取远程 hash
     success, remote_hash, _ = run_git_command(["git", "rev-parse", "origin/main"])
     if not success:
         print("⚠️  无法获取远程 commit\n")
         return False
-    
+
     remote_hash = remote_hash.strip()
-    
+
     if local_hash == remote_hash:
         print(f"✅ 验证成功！本地和远程一致\n")
         return True
@@ -358,6 +369,7 @@ def verify_push(local_hash: str) -> bool:
 
 
 # ==================== 文档处理函数 ====================
+
 
 def process_document(doc_path: Path) -> bool:
     """处理单个文档"""
@@ -419,49 +431,49 @@ def publish() -> int:
     print("📦 自动化知识发布流程")
     print("=" * 60)
     print()
-    
+
     # 步骤 1: 检查 Git 状态
     if not check_git_status():
         print("ℹ️  没有修改需要发布，退出")
         return 0
-    
+
     # 步骤 2: 检测 Mermaid
     mermaid_docs = detect_mermaid_in_knowledge()
-    
+
     # 步骤 3: 生成图片（如果需要）
     if mermaid_docs:
         print("📋 步骤 3/5: 生成高质量流程图\n")
-        
+
         if not check_mmdc():
             return 1
-        
+
         success_count = 0
         for doc_path in mermaid_docs:
             if process_document(doc_path):
                 success_count += 1
-        
+
         if success_count == 0:
             print("\n❌ 图片生成失败")
             return 1
-        
+
         print(f"\n✅ 成功生成 {success_count}/{len(mermaid_docs)} 个文档的流程图\n")
     else:
         print("ℹ️  无需生成图片\n")
         print("📋 步骤 3/5: 跳过图片生成\n")
-    
+
     # 步骤 4: 生成 commit message 并提交推送
     commit_msg = generate_commit_message()
     success, result = commit_and_push(commit_msg)
-    
+
     if not success:
         print(f"❌ {result}")
         return 1
-    
+
     local_hash = result
-    
+
     # 步骤 5: 验证推送
     verify_push(local_hash)
-    
+
     # 最终总结
     print("=" * 60)
     print("🎉 发布成功！")
@@ -477,7 +489,7 @@ def publish() -> int:
     print("📁 查看 Knowledge Base：")
     print(f"   https://github.com/{GITHUB_REPO}/tree/{GITHUB_BRANCH}/knowledge")
     print()
-    
+
     return 0
 
 
@@ -489,19 +501,19 @@ def build_only(doc_files: List[Path]) -> int:
     # 检查工具
     if not check_mmdc():
         return 1
-    
+
     if not doc_files:
         print("❌ 没有找到要处理的文件\n")
         return 1
-    
+
     print(f"\n🚀 准备处理 {len(doc_files)} 个文档\n")
-    
+
     # 处理所有文档
     success_count = 0
     for doc_file in doc_files:
         if process_document(doc_file):
             success_count += 1
-    
+
     # 总结
     print(f"\n{'='*60}")
     print(f"🎉 完成！成功处理 {success_count}/{len(doc_files)} 个文档")
@@ -514,7 +526,7 @@ def build_only(doc_files: List[Path]) -> int:
     print(f"  2. git commit -m 'docs: 更新流程图'")
     print(f"  3. git push")
     print(f"{'='*60}\n")
-    
+
     return 0 if success_count == len(doc_files) else 1
 
 
@@ -538,7 +550,9 @@ def main():
         "--all", action="store_true", help="处理 knowledge/ 目录下所有 .md 文件"
     )
     parser.add_argument(
-        "--publish", action="store_true", help="完整发布流程（检测 → 生成 → 提交 → 推送）"
+        "--publish",
+        action="store_true",
+        help="完整发布流程（检测 → 生成 → 提交 → 推送）",
     )
 
     args = parser.parse_args()
@@ -546,7 +560,7 @@ def main():
     # 模式 1: 完整发布流程
     if args.publish:
         sys.exit(publish())
-    
+
     # 模式 2: 仅生成图片
     if args.all:
         doc_files = list(Path("knowledge").glob("*.md"))
@@ -559,7 +573,7 @@ def main():
         print("  <files>          处理指定文档\n")
         parser.print_help()
         sys.exit(1)
-    
+
     sys.exit(build_only(doc_files))
 
 
