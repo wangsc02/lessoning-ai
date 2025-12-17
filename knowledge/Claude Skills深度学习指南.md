@@ -445,157 +445,225 @@ Tools：
 
 ## Skills vs Cursor Commands：核心差异
 
+### 对比维度
+
 ```
 ┌──────────────┬─────────────────────┬─────────────────────┐
 │  维度        │  Claude Skills      │  Cursor Commands    │
 ├──────────────┼─────────────────────┼─────────────────────┤
-│ 定位         │ AI能力模块          │ IDE工作流自动化     │
-│ 作用范围     │ 通用任务            │ 代码编辑相关        │
-│ 触发方式     │ 自然语言/显式调用   │ 快捷键/命令面板     │
-│ 执行环境     │ AI推理过程          │ VS Code扩展         │
-│ 可移植性     │ 高(跨平台)          │ 低(限Cursor)        │
-│ 学习曲线     │ 中(需理解AI)        │ 低(熟悉的IDE操作)   │
-│ 自定义性     │ 强(纯文本定义)      │ 强(JS/TS代码)       │
-│ 协作性       │ 强(易分享)          │ 中(需要配置同步)    │
+│ 核心定位     │ AI 的"思考指南"     │ IDE 的"自动化脚本"  │
+│ 作用方式     │ 影响 AI 推理过程    │ 执行文件/系统操作   │
+│ 触发方式     │ 自然语言/显式激活   │ 命令面板/快捷键     │
+│ 执行环境     │ AI 模型内部         │ IDE + Shell         │
+│ 可移植性     │ 高(跨平台/跨工具)   │ 低(限 Cursor IDE)   │
+│ 编写方式     │ Markdown 指令       │ Markdown + Shell/JS │
+│ 学习曲线     │ 中(需理解 AI 机制)  │ 低-中(看复杂度)     │
+│ 协作分享     │ 强(纯文本文件)      │ 中(需环境一致)      │
 └──────────────┴─────────────────────┴─────────────────────┘
 ```
 
-#### 具体对比示例
+### 关键差异：作用对象不同
 
-**场景：生成单元测试**
+**Claude Skills**：
+- 作用于 **AI 的思考和输出**
+- 不直接操作文件系统或外部工具
+- 指导 AI "如何思考、如何判断、如何输出"
 
-**Cursor Command 方式**：
-```typescript
-// .cursor/commands/generate-test.ts
-export default {
-  name: 'Generate Unit Test',
-  execute: async (context) => {
-    const editor = context.activeEditor;
-    const selection = editor.selection;
-    const code = editor.document.getText(selection);
-    
-    // 调用 AI
-    const test = await context.ai.complete({
-      prompt: `为以下代码生成Jest单元测试：\n${code}`,
-      model: 'claude-3-opus'
-    });
-    
-    // 插入到编辑器
-    const testFile = code.fileName.replace('.ts', '.test.ts');
-    await context.workspace.createFile(testFile, test);
-  }
-}
+**Cursor Commands**：
+- 作用于 **IDE 和文件系统**
+- 可以直接读写文件、执行命令
+- 自动化"打开文件、修改代码、提交 Git"等操作
+
+### 实际案例对比
+
+#### 案例1：发布知识（本项目的 publish-knowledge）
+
+**Cursor Command 实现**：
+```markdown
+---
+description: 发布知识到 GitHub：检测 Mermaid → 生成图片 → 提交 → 推送
+globs: ["knowledge/**/*.md"]
+---
+
+# Skill: 发布知识
+
+## 工作流程
+1. 检查 Git 状态
+2. 检测 Mermaid 代码块
+3. 生成高清流程图
+4. 智能生成 Commit Message
+5. 提交并推送到 GitHub
+
+## 实现
+```bash
+cd /Users/wangsc/Agent/lessoning-ai
+python3 tools/knowledge_publisher.py --publish
 ```
 
 **特点**：
 ```
-✅ 深度集成 IDE（直接操作编辑器、文件）
-✅ 可以执行复杂的文件操作
-✅ 快捷键触发，效率高
-✅ 适合重复性的代码操作
+✅ 一键执行完整发布流程
+✅ 可以操作 Git、文件系统
+✅ 调用外部工具（Python 脚本）
+✅ IDE 中快速触发
 
 ❌ 只能在 Cursor 中使用
-❌ 需要 TypeScript 编程知识
-❌ 难以跨项目分享（配置依赖）
-❌ 逻辑写死在代码里
+❌ 依赖特定项目路径
+❌ 需要本地工具支持
+```
+
+**如果用 Claude Skill 实现**：
+```markdown
+---
+name: knowledge-publisher
+description: 指导如何发布知识文档到 GitHub
+---
+
+# Knowledge Publisher Skill
+
+## Publishing Checklist
+1. **检查文档质量**
+   - 确保 Mermaid 图表语法正确
+   - 检查 Markdown 格式
+   - 验证链接有效性
+
+2. **生成 Commit Message**
+   - 分析修改内容
+   - 遵循 Conventional Commits 规范
+   - 格式：`<type>: <description>`
+
+3. **验证步骤**
+   - Git status 检查
+   - 推送前的最后确认
+   - 推送后验证
+
+## Output Format
+生成标准化的操作指令...
+```
+
+**特点**：
+```
+✅ 跨平台使用（任何有 Claude 的地方）
+✅ 指导人工或 AI 完成发布流程
+✅ 易于修改和分享
+
+❌ 无法直接执行 Git 操作
+❌ 需要人工或工具辅助执行
+❌ 不能自动化文件操作
+```
+
+#### 案例2：代码审查
+
+**Cursor Command 方式**：
+```markdown
+---
+description: 自动审查当前文件，生成报告并插入注释
+globs: ["src/**/*.ts"]
+---
+
+```bash
+# 获取当前文件
+file=$(cursor getCurrentFile)
+# 调用审查工具
+python review.py "$file" > report.md
+# 在编辑器中打开报告
+cursor open report.md
 ```
 
 **Claude Skill 方式**：
 ```markdown
 ---
-name: unit-test-generator
-description: 生成符合团队规范的单元测试
+name: code-reviewer
+description: 按照团队规范审查代码质量
 ---
 
-# Unit Test Generator
+# Code Reviewer Skill
 
-## Test Philosophy
-- 测试行为，不测试实现
-- 每个函数至少3个测试：正常、边界、异常
-- 使用 AAA 模式：Arrange, Act, Assert
+## Review Checklist
+1. 命名规范
+2. 安全性检查（SQL注入、XSS）
+3. 性能考虑
+4. 错误处理
 
-## Test Structure
-```javascript
-describe('FunctionName', () => {
-  it('should handle normal case', () => {
-    // Arrange: 准备数据
-    // Act: 执行函数
-    // Assert: 验证结果
-  });
-  
-  it('should handle edge case', () => {
-    ...
-  });
-  
-  it('should handle error case', () => {
-    ...
-  });
-});
+## Output Format
+生成结构化的审查报告...
 ```
 
-## Coverage Requirements
-- 行覆盖率 > 80%
-- 分支覆盖率 > 70%
-- 关键函数 100%
+### 本质差异总结
 
-## Examples
-[具体示例]
+**关键区别**：
+```
+Cursor Command = IDE Automation（自动化执行）
+├─ 能做什么：操作文件、运行命令、调用工具
+├─ 限制：只在 Cursor 中可用
+└─ 类比：给 IDE 写的"宏"或"脚本"
+
+Claude Skill = AI Knowledge（知识指导）
+├─ 能做什么：指导 AI 思考、判断、输出
+├─ 限制：不能直接操作系统
+└─ 类比：给 AI 的"工作手册"或"SOP"
 ```
 
-**特点**：
-```
-✅ 跨平台使用（Claude.ai、API、Code）
-✅ 非程序员可以编写和修改
-✅ 易于分享和版本控制
-✅ 测试哲学和标准明确
+**两者可以互补**：
+- Cursor Command 调用 Skill：用 Command 获取代码 → 激活 Skill 分析 → Command 应用修改
+- Skill 指导 Command 开发：用 Skill 定义审查标准 → Command 自动化执行
 
-❌ 无法直接创建文件（需要手动或工具辅助）
-❌ 不能快捷键触发（需要自然语言）
-❌ 无法深度集成 IDE 功能
-```
-
-#### 什么时候用哪个？
+### 选择指南
 
 ```
 使用 Cursor Command：
-┌────────────────────────────────────┐
-│ ✅ 频繁的代码编辑操作               │
-│    例：重构、格式化、导入整理       │
-│                                    │
-│ ✅ 需要 IDE 深度集成                │
-│    例：打开文件、跳转定义、调试     │
-│                                    │
-│ ✅ 固定的工作流                     │
-│    例：创建组件模板、配置文件       │
-│                                    │
-│ ✅ 个人开发效率工具                 │
-│    例：自定义快捷方式、个性化工作流 │
-└────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│ ✅ 需要自动化执行操作                       │
+│    例：Git 提交推送、文件批处理、格式化     │
+│                                            │
+│ ✅ 需要操作文件系统或外部工具               │
+│    例：生成图片、运行测试、部署发布         │
+│                                            │
+│ ✅ 固定的重复性工作流                       │
+│    例：项目初始化、组件模板创建             │
+│                                            │
+│ ✅ IDE 环境专属的操作                       │
+│    例：打开文件、跳转定义、编辑器操作       │
+│                                            │
+│ 💡 关键：需要"做事"而不是"思考"             │
+└────────────────────────────────────────────┘
 
 使用 Claude Skill：
-┌────────────────────────────────────┐
-│ ✅ 需要 AI 理解和判断               │
-│    例：代码审查、架构建议           │
-│                                    │
-│ ✅ 团队协作和标准化                 │
-│    例：编码规范、测试策略           │
-│                                    │
-│ ✅ 跨项目、跨工具使用               │
-│    例：文档写作、数据分析           │
-│                                    │
-│ ✅ 需要灵活调整                     │
-│    例：营销文案、业务流程           │
-└────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│ ✅ 需要 AI 理解、分析、判断                 │
+│    例：代码审查、架构设计、需求分析         │
+│                                            │
+│ ✅ 需要灵活应对不同情况                     │
+│    例：根据上下文调整输出风格和内容         │
+│                                            │
+│ ✅ 跨平台、跨工具使用                       │
+│    例：在任何支持 Claude 的环境中都能用     │
+│                                            │
+│ ✅ 知识和标准的封装                         │
+│    例：团队规范、写作风格、业务流程         │
+│                                            │
+│ 💡 关键：需要"思考指导"而不是"执行操作"     │
+└────────────────────────────────────────────┘
 
-组合使用：
-┌────────────────────────────────────┐
-│ 🔄 Cursor Command 触发 Skill        │
-│    Command 提供操作，Skill 提供智能 │
-│                                    │
-│    例：Command 获取代码 →           │
-│        Skill 分析 →                │
-│        Command 应用修改             │
-└────────────────────────────────────┘
+完美组合（本项目实践）：
+┌────────────────────────────────────────────┐
+│ 🔄 Cursor Command + Python Tool + Skill    │
+│                                            │
+│    架构设计：                               │
+│    ├─ Command: 轻量入口（触发器）          │
+│    ├─ Tool: 业务逻辑（Python 脚本）        │
+│    └─ Skill: 知识指导（如何做决策）        │
+│                                            │
+│    实例：publish-knowledge                 │
+│    ├─ Command: 一键触发发布流程            │
+│    ├─ Tool: 检测 Mermaid、生成图片、Git    │
+│    └─ (可选) Skill: 指导如何写好文档       │
+│                                            │
+│    优势：                                  │
+│    ✅ Command 提供便捷入口                 │
+│    ✅ Tool 提供可复用的业务逻辑            │
+│    ✅ Skill 提供知识和判断标准             │
+└────────────────────────────────────────────┘
 ```
 
 ---
