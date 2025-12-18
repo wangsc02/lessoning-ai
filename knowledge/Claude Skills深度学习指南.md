@@ -87,6 +87,11 @@ AI: "明白！我会按照贵司的品牌指南、标准模板和最佳实践来
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/claude_skills_/1_6bdbd9c7.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TB
     App["AI 应用层<br/>(用户交互、业务逻辑)"]
@@ -102,8 +107,9 @@ graph TB
     style Skills fill:#e1f5ff,stroke:#01579b,stroke-width:2px
     style Tools fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style Model fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style App fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-```
+    style App fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px```
+
+</details>
 
 </details>
 
@@ -1161,10 +1167,8 @@ version: "2.0.0"
 ---
 需要更多帮助？联系：hr-leave@company.com
 ```
-```
 
 **分析**：
-```
 为什么这是好的 Skill 设计？
 
 1. 纯指令型
@@ -1187,126 +1191,6 @@ version: "2.0.0"
    ✅ 文档更新时，只需更新 Skill
    ✅ HR可以自己编辑（无需程序员）
    ✅ 版本控制（v3.2）
-
-如果加上 Tools：
-- Tool 1: 搜索文档数据库
-- Tool 2: 检查用户权限
-- Tool 3: 记录查询日志
-→ 变成更强大的系统
-```
-
-### 案例2：代码审查 Skill + Tool（组合型）
-
-**业务场景**：团队需要统一的代码审查标准，并自动化部分检查
-
-```markdown
----
-name: code-reviewer
-description: |
-  团队代码审查助手，按照公司编码规范检查代码质量、
-  安全性和性能。结合静态分析工具提供全面的审查报告。
----
-
-# Code Reviewer Skill
-
-## Review Dimensions
-
-### 1. 代码质量（40分）
-- 命名规范
-- 函数复杂度
-- 代码重复
-- 注释完整性
-
-### 2. 安全性（30分）
-- SQL注入风险
-- XSS风险
-- 敏感信息泄露
-- 权限检查
-
-### 3. 性能（20分）
-- 算法复杂度
-- 数据库查询
-- 内存使用
-
-### 4. 可维护性（10分）
-- 模块化
-- 错误处理
-- 测试覆盖
-
-## Review Process
-
-### 阶段1：静态分析
-使用 Tool: `run_static_analysis(file_path)`
-获取：
-- 代码度量
-- 潜在bug
-- 样式问题
-
-### 阶段2：人工审查（我的职责）
-基于静态分析结果 + 代码内容：
-- 理解代码意图
-- 检查业务逻辑
-- 评估架构设计
-- 提供改进建议
-
-### 阶段3：生成报告
-使用统一的报告模板
-
-## Report Template
-
-```markdown
-# Code Review: [文件名]
-
-## 📊 总体评分
-**综合得分**: [X]/100
-- 代码质量: [X]/40
-- 安全性: [X]/30
-- 性能: [X]/20
-- 可维护性: [X]/10
-
-## 🔴 Critical Issues (必须修复)
-
-### Issue 1: [标题]
-**位置**: Line [X]
-**类型**: Security / Quality / Performance
-
-**问题**:
-[描述]
-
-**风险**:
-[影响说明]
-
-**修复方案**:
-```[language]
-// 修复后代码
-```
-
-**为什么这样改**:
-[原理说明]
-
----
-
-## 🟡 Warnings (建议修复)
-[同上格式]
-
-## 🟢 Suggestions (可选优化)
-[同上格式]
-
-## ✅ 优点
-- [好的实践1]
-- [好的实践2]
-
-## 📋 Action Items
-- [ ] 修复 Critical Issue 1
-- [ ] 修复 Critical Issue 2
-- [ ] 处理 Warning 1
-
-**预估工作量**: [X] 小时
-
-## 📚 参考资料
-- [团队编码规范](link)
-- [安全检查清单](link)
-```
 
 
 ## 最佳实践
@@ -1489,98 +1373,6 @@ Skills = 将人类知识和经验，转化为 AI 可重复使用的能力模块
    企业: 知识资产
    行业: 最佳实践共享
 ```
-
-### 立即行动
-
-```
-🎯 个人开发者
-Week 1: 试用现有 Skills
-├─ 在 Claude.ai 体验
-├─ 分析优秀示例
-└─ 识别自己的重复性任务
-
-Week 2: 创建第一个 Skill
-├─ 选择简单场景
-├─ 编写 SKILL.md
-└─ 迭代优化
-
-Week 3: 组合使用
-├─ Skill + Tool
-├─ Multi-Skill 协作
-└─ 工作流自动化
-
-Week 4: 分享和贡献
-├─ 开源你的 Skill
-├─ 参与社区讨论
-└─ 建立影响力
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🏢 企业团队
-Phase 1: 评估和试点（1个月）
-├─ 识别高价值场景
-├─ 选择2-3个试点
-└─ 小范围验证
-
-Phase 2: 标准化（2-3个月）
-├─ 制定 Skill 开发规范
-├─ 建立内部 Skill 库
-├─ 培训团队成员
-└─ 设置审查流程
-
-Phase 3: 规模化（3-6个月）
-├─ 扩展到更多部门
-├─ 建立卓越中心
-├─ 度量业务价值
-└─ 持续优化
-
-Phase 4: 创新（持续）
-├─ 探索前沿用例
-├─ 贡献行业 Skills
-├─ 建立竞争优势
-└─ 知识资产化
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🚀 创业者
-机会领域：
-1. 垂直行业 Skill Packs
-   └─ 医疗、法律、金融等
-
-2. Skill 开发和咨询
-   └─ 帮助企业定制 Skills
-
-3. Skill Marketplace
-   └─ 交易平台和社区
-
-4. Skill 管理工具
-   └─ 企业级管理平台
-
-5. Skill 培训和认证
-   └─ 教育和生态建设
-```
-
-### 学习资源
-
-```
-官方资源：
-├─ GitHub: anthropics/skills
-├─ 文档: Claude Skills Documentation
-└─ 社区: Discord #skills
-
-合作伙伴：
-├─ Notion Skills
-└─ [未来更多]
-
-学习路径：
-第1周: 基础概念
-第2周: 动手创建
-第3周: 高级技巧
-第4周: 实战项目
-持续: 关注生态发展
-```
-
----
 
 ## 结语
 

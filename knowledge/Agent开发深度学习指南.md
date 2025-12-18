@@ -85,6 +85,11 @@ Agent = 概率输出引擎（LLM） + 确定性约束系统（状态机 + 策略
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/1_d77efb64.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant U as User
@@ -112,8 +117,9 @@ sequenceDiagram
     else give_up
       R-->>U: {"status": "partial", "reason": "..."}
     end
-  end
-```
+  end```
+
+</details>
 
 </details>
 
@@ -125,6 +131,11 @@ sequenceDiagram
 ### 3.2 状态机视角：Agent 的真实样子
 
 很多人觉得 Agent 是"自由发挥"的，但实际上生产级 Agent 更像一个**有限状态机（FSM）+ LLM 做路由**：
+
+![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/2_cdf3a1b9.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
 
 ![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/2_cdf3a1b9.png)
 
@@ -150,8 +161,9 @@ stateDiagram-v2
   Retry --> ToolCall: 重试
   Downgrade --> Answer: 部分结果
   NeedHuman --> [*]: 人工介入
-  Answer --> [*]: 完成
-```
+  Answer --> [*]: 完成```
+
+</details>
 
 </details>
 
@@ -181,6 +193,11 @@ stateDiagram-v2
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 3](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/3_21a07d0a.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant LLM
@@ -193,8 +210,9 @@ sequenceDiagram
   LLM->>Tools: Action
   Tools-->>LLM: Observation
   LLM->>LLM: Thought: "已收集足够信息"
-  LLM->>LLM: Final Answer
-```
+  LLM->>LLM: Final Answer```
+
+</details>
 
 </details>
 
@@ -240,6 +258,11 @@ def react_agent(question, tools, max_steps=10):
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 4](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/4_f42f115b.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant U as User
@@ -261,8 +284,9 @@ sequenceDiagram
     end
   end
   
-  E-->>U: final_result
-```
+  E-->>U: final_result```
+
+</details>
 
 </details>
 
@@ -307,14 +331,20 @@ def plan_and_execute(task, tools):
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 5](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/5_c2c18490.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[生成初稿] --> B[Reflection: 自我批评]
   B --> C{是否满足标准?}
   C -->|否| D[根据批评改进]
   D --> A
-  C -->|是| E[输出终稿]
-```
+  C -->|是| E[输出终稿]```
+
+</details>
 
 </details>
 
@@ -372,6 +402,11 @@ def multi_agent_reflection(task):
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 6](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/6_ab13de57.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[初始状态] --> B1[思路1]
@@ -382,8 +417,9 @@ graph TD
   B3 --> C3[评分: 9/10]
   C3 --> D1[深入思路3 - 分支A]
   C3 --> D2[深入思路3 - 分支B]
-  D1 --> E[最终答案]
-```
+  D1 --> E[最终答案]```
+
+</details>
 
 </details>
 
@@ -657,6 +693,11 @@ def transactional_workflow(steps):
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 7](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/7_bc24b2bb.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[开始] --> B{任务是否<br/>可预先分解?}
@@ -676,8 +717,9 @@ graph TD
   
   I --> J[+状态管理]
   J --> K[+错误处理]
-  K --> L[完整架构]
-```
+  K --> L[完整架构]```
+
+</details>
 
 </details>
 
@@ -697,6 +739,11 @@ graph TD
 ### 3.5.6 系统分层架构
 
 #### 完整架构图
+
+![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/8_ec1acc1c.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
 
 ![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/8_ec1acc1c.png)
 
@@ -775,8 +822,9 @@ graph TD
   
   LOOP --> TRACE
   LOOP --> METRICS
-  LOOP --> LOGGER
-```
+  LOOP --> LOGGER```
+
+</details>
 
 </details>
 
@@ -958,6 +1006,11 @@ class LLMProvider(ABC):
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 9](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/9_0d415223.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[开始选型] --> B{是否需要<br/>多Agent协作?}
@@ -974,8 +1027,9 @@ graph TD
   H -->|.NET/C#| J[Semantic Kernel]
   
   I -->|是| K[自研<br/>参考LangGraph]
-  I -->|否| L[Haystack<br/>或LangChain]
-```
+  I -->|否| L[Haystack<br/>或LangChain]```
+
+</details>
 
 </details>
 
@@ -1448,6 +1502,11 @@ def validate_output(output, rules_db):
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 10](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/10_63a711bc.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant GH as GitHub PR
@@ -1471,8 +1530,9 @@ sequenceDiagram
   end
   
   A->>A: aggregate_report() [确定性]
-  A->>GH: post_comment(report)
-```
+  A->>GH: post_comment(report)```
+
+</details>
 
 </details>
 
@@ -1553,6 +1613,11 @@ def code_review_agent(pr_url, budget):
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 11](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/11_e57a0386.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 stateDiagram-v2
   [*] --> PreCheck
@@ -1568,8 +1633,9 @@ stateDiagram-v2
   
   AutoRoute --> [*]: 自动分配
   HumanConfirm --> [*]: 推荐 + 等待确认
-  HumanReview --> [*]: 全人工处理
-```
+  HumanReview --> [*]: 全人工处理```
+
+</details>
 
 </details>
 
@@ -1792,6 +1858,11 @@ def call_external_api(api, args):
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 12](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/agent_/12_c2f956ed.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TD
   A[开始] --> Q1{路径是否<br/>可预先确定?}
@@ -1816,8 +1887,9 @@ graph TD
   B --> Q6
   Q6 -->|是| M[+Memory淘汰]
   Q6 -->|否| DONE[完成架构设计]
-  M --> DONE
-```
+  M --> DONE```
+
+</details>
 
 </details>
 
