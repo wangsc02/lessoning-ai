@@ -92,6 +92,11 @@ AI: "明白！我会按照贵司的品牌指南、标准模板和最佳实践来
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/claude_skills_/1_6bdbd9c7.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 graph TB
     App["AI 应用层<br/>(用户交互、业务逻辑)"]
@@ -108,6 +113,8 @@ graph TB
     style Tools fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style Model fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style App fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px```
+
+</details>
 
 </details>
 

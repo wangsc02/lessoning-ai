@@ -158,6 +158,11 @@ LangChain 1.0 的价值，恰恰是把这些“系统问题”显式化：用更
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 1](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/1_49c518d7.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   subgraph v0x [v0x_LinearChain]
@@ -175,6 +180,8 @@ flowchart TD
     joinNode --> nodeC[Node_C_Runnable]
     nodeC --> v1_out[Output]
   end```
+
+</details>
 
 </details>
 
@@ -244,6 +251,11 @@ LangGraph 把执行模型从“函数嵌套调用”升级成“显式状态机/
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 2](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/2_8f0cafeb.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 stateDiagram-v2
   [*] --> init
@@ -259,6 +271,8 @@ stateDiagram-v2
     callTool --> callModel
     callModel --> [*]
   }```
+
+</details>
 
 </details>
 
@@ -317,6 +331,11 @@ LangChain 1.0 的模块化拆分，表面上是“包更多了”，实质上是
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 3](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/3_2cf8d1f8.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   app[YourApp] --> lc[langchain]
@@ -330,6 +349,8 @@ flowchart TD
 
   app --> classic[langchain_classic]
   classic --> core```
+
+</details>
 
 </details>
 
@@ -444,6 +465,11 @@ out = safe.invoke({"input": "..."})
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 4](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/4_3c9bc81c.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   inNode[Input] --> seqA[Seq_A]
@@ -461,6 +487,8 @@ flowchart TD
   router --> path2[Path_2]
   path1 --> out3[Output]
   path2 --> out3```
+
+</details>
 
 </details>
 
@@ -502,6 +530,11 @@ LangChain 1.0 的消息系统核心不在“角色有几种”，而在于：它
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 5](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/5_5c55a1bb.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant Human as Human
@@ -516,6 +549,8 @@ sequenceDiagram
   Tool-->>Agent: tool_result
   Agent->>Model: messages(+ToolMessage)
   Model-->>Agent: final_answer```
+
+</details>
 
 </details>
 
@@ -652,6 +687,11 @@ RAG 的真正目标不是“把知识塞给模型”，而是：
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 6](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/6_b1dd614a.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 sequenceDiagram
   participant User as User
@@ -668,6 +708,8 @@ sequenceDiagram
   App->>Model: prompt(question+contexts+citation_rules)
   Model-->>App: answer_with_citations
   App-->>User: answer + sources```
+
+</details>
 
 </details>
 
@@ -817,6 +859,11 @@ Agent 的“强大”来自工具调用；Agent 的“风险”也来自工具�
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 7](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/7_da413455.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 stateDiagram-v2
   [*] --> plan
@@ -825,6 +872,8 @@ stateDiagram-v2
   observe --> decide
   decide --> done
   decide --> plan```
+
+</details>
 
 </details>
 
@@ -876,6 +925,11 @@ return partial_output(state, reason="MAX_STEPS_EXCEEDED")
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 8](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/8_ba6cda57.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   sup[Supervisor] --> a1[Agent_Research]
@@ -885,6 +939,8 @@ flowchart TD
   a2 --> sup
   a3 --> sup
   sup --> out[Final]```
+
+</details>
 
 </details>
 
@@ -1228,6 +1284,11 @@ if len(collected_info) >= 10:   # 收集够 10 条关键信息就停
 <details>
 <summary>📝 查看/编辑 Mermaid 源码</summary>
 
+![流程图 9](https://raw.githubusercontent.com/wangsc02/lessoning-ai/main/knowledge/images/langchain1/9_cfe7f852.png)
+
+<details>
+<summary>📝 查看/编辑 Mermaid 源码</summary>
+
 ```mermaid
 flowchart TD
   q1["Need_State_Resume?"] -->|Yes| g1["Use_GraphRuntime"]
@@ -1236,6 +1297,8 @@ flowchart TD
   q2 -->|No| q3["Need_Tools?"]
   q3 -->|Yes| a1["Agent_With_Governance"]
   q3 -->|No| s1["Direct_Model_Call"]```
+
+</details>
 
 </details>
 
