@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交付闭环：测试、可观测性与安全上线（精简版）</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root {
+  --r-main-font: 'Noto Sans SC', sans-serif;
+  --r-heading-font: 'Noto Sans SC', sans-serif;
+  --r-main-font-size: 32px;
+}
+.reveal { font-family: 'Noto Sans SC', sans-serif; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: 'Noto Sans SC', sans-serif; font-weight: 700; }
+.reveal h1 { font-size: 2.2em; }
+.reveal h2 { font-size: 1.4em; }
+.reveal h3 { font-size: 1.1em; }
+
+/* Cover */
+.cover-slide h1 { font-size: 2.0em; font-weight: 900; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3em; }
+.cover-slide .subtitle { font-size: 1.1em; color: #aaa; margin-bottom: 2em; }
+
+/* Section badge */
+.section-badge { display: inline-block; padding: 6px 20px; border-radius: 30px; font-size: 0.6em; font-weight: 500; margin-bottom: 0.5em; letter-spacing: 2px; }
+.badge-test { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.badge-stability { background: linear-gradient(135deg, #ff6a88, #ff99ac); color: #1a1a2e; }
+.badge-observability { background: linear-gradient(135deg, #f6d365, #fda085); color: #1a1a2e; }
+.badge-release { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a1a2e; }
+.badge-pitfall { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #1a1a2e; }
+.badge-summary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+
+/* Quote */
+.quote-box { background: rgba(255,255,255,0.05); border-left: 4px solid #43e97b; padding: 15px 25px; border-radius: 0 12px 12px 0; margin: 15px auto; max-width: 85%; text-align: left; font-size: 0.8em; font-style: italic; color: #ccc; }
+
+/* Bullet list */
+.reveal ul.clean { list-style: none; padding: 0; text-align: left; max-width: 85%; margin: 0 auto; }
+.reveal ul.clean li { padding: 6px 0; font-size: 0.7em; line-height: 1.4; color: #ddd; position: relative; padding-left: 24px; }
+.reveal ul.clean li::before { content: ''; position: absolute; left: 0; top: 12px; width: 10px; height: 10px; border-radius: 50%; }
+.reveal ul.clean.green li::before { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.reveal ul.clean.orange li::before { background: linear-gradient(135deg, #f6d365, #fda085); }
+.reveal ul.clean.purple li::before { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+.reveal ul.clean.blue li::before { background: linear-gradient(135deg, #667eea, #764ba2); }
+.reveal ul.clean.pink li::before { background: linear-gradient(135deg, #ff6a88, #ff99ac); }
+
+/* Highlight */
+.highlight { color: #ffd700; font-weight: 700; }
+.highlight-blue { color: #82aaff; font-weight: 700; }
+.highlight-green { color: #43e97b; font-weight: 700; }
+.highlight-pink { color: #ff6a88; font-weight: 700; }
+.highlight-orange { color: #f6d365; font-weight: 700; }
+
+/* Grid */
+.domain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 90%; margin: 12px auto; }
+.domain-card { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 12px 14px; text-align: left; border: 1px solid rgba(255,255,255,0.08); }
+.domain-card h4 { margin: 0 0 5px; font-size: 0.65em; }
+.domain-card p { margin: 0; font-size: 0.5em; color: #aaa; line-height: 1.4; }
+
+/* Flow */
+.flow { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 12px auto; flex-wrap: wrap; }
+.flow-step { background: rgba(255,255,255,0.08); padding: 8px 14px; border-radius: 8px; font-size: 0.6em; font-weight: 500; }
+.flow-arrow { font-size: 1em; color: #43e97b; }
+
+/* Takeaway */
+.takeaway { font-size: 1.1em; font-weight: 700; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; max-width: 80%; margin: 0 auto; line-height: 1.5; }
+
+/* End slide */
+.end-slide h1 { font-size: 2.5em; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Table */
+.reveal table.styled { width: 90%; margin: 12px auto; font-size: 0.45em; border-collapse: separate; border-spacing: 0; border-radius: 10px; overflow: hidden; }
+.reveal table.styled thead tr { background: rgba(67,233,123,0.3); }
+.reveal table.styled th { padding: 8px 6px; text-align: left; font-weight: 600; }
+.reveal table.styled td { padding: 6px; }
+.reveal table.styled tbody tr:nth-child(odd) { background: rgba(255,255,255,0.03); }
+.reveal table.styled tbody tr:nth-child(even) { background: rgba(255,255,255,0.06); }
+
+/* Four grid */
+.four-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 90%; margin: 12px auto; }
+.four-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px; text-align: center; }
+.four-card h4 { margin: 0 0 6px; font-size: 0.65em; }
+.four-card p { margin: 0; font-size: 0.48em; color: #aaa; line-height: 1.3; }
+
+/* Vertical flow */
+.vertical-flow { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 15px auto; }
+.vertical-step { padding: 10px 25px; border-radius: 10px; font-size: 0.6em; font-weight: 500; min-width: 180px; text-align: center; }
+
+/* Layer arrow */
+.layer-arrow { color: #43e97b; font-size: 0.85em; }
+
+/* Arch diagram */
+.arch-flow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 15px auto; flex-wrap: wrap; }
+.arch-box { padding: 10px 14px; border-radius: 10px; font-size: 0.55em; font-weight: 600; text-align: center; min-width: 80px; }
+
+/* Compact list */
+.compact-list { font-size: 0.6em; color: #bbb; max-width: 85%; margin: 10px auto; text-align: left; }
+.compact-list li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- Slide 1: Cover -->
+<section class="cover-slide">
+  <h1>交付闭环</h1>
+  <p class="subtitle">测试 · 稳定性 · 可观测性 · 安全上线</p>
+  <p style="font-size:0.7em; color:#666; margin-top:30px;">Part 1 · 第七篇</p>
+</section>
+
+<!-- Slide 2: Opening + Agenda -->
+<section>
+  <h2>功能写完了，然后呢？</h2>
+  <div class="four-grid" style="margin-top:25px;">
+    <div class="four-card" style="border:1px solid rgba(102,126,234,0.3);">
+      <h4 style="color:#82aaff;">测试</h4>
+      <p>你怎么知道它是对的？</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(255,106,136,0.3);">
+      <h4 style="color:#ff6a88;">稳定性</h4>
+      <p>运行时出问题怎么办？</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(246,211,101,0.3);">
+      <h4 style="color:#f6d365;">可观测性</h4>
+      <p>出了问题怎么发现和定位？</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(67,233,123,0.3);">
+      <h4 style="color:#43e97b;">上线</h4>
+      <p>怎么安全地交付到生产？</p>
+    </div>
+  </div>
+  <div class="quote-box" style="margin-top:20px; font-style:normal; font-size:0.7em;">
+    大多数线上事故，<span class="highlight">不是代码逻辑写错了</span>，而是<span class="highlight-pink">没人知道它已经错了</span>
+  </div>
+</section>
+
+<!-- Slide 3: Testing -->
+<section>
+  <span class="section-badge badge-test">测试</span>
+  <h2>核心问题：上线后我敢不敢不盯着？</h2>
+  <div style="display:flex; gap:12px; max-width:90%; margin:20px auto;">
+    <div style="flex:1; background:rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.25); border-radius:10px; padding:12px; text-align:left;">
+      <p style="font-size:0.6em; color:#82aaff; font-weight:600; margin:0 0 6px;">第一层：单测</p>
+      <p style="font-size:0.5em; color:#aaa; margin:0;">核心逻辑，下次改了能立刻知道</p>
+    </div>
+    <div style="flex:1; background:rgba(67,233,123,0.08); border:1px solid rgba(67,233,123,0.25); border-radius:10px; padding:12px; text-align:left;">
+      <p style="font-size:0.6em; color:#43e97b; font-weight:600; margin:0 0 6px;">第二层：集成</p>
+      <p style="font-size:0.5em; color:#aaa; margin:0;">多模块连起来是否正确</p>
+    </div>
+    <div style="flex:1; background:rgba(255,106,136,0.08); border:1px solid rgba(255,106,136,0.25); border-radius:10px; padding:12px; text-align:left;">
+      <p style="font-size:0.6em; color:#ff6a88; font-weight:600; margin:0 0 6px;">第三层：边界</p>
+      <p style="font-size:0.5em; color:#aaa; margin:0;">空值、重复、并发、超时</p>
+    </div>
+  </div>
+  <p style="font-size:0.7em; color:#ff6a88; margin-top:20px; font-weight:600;">
+    大多数线上问题出在"异常流程没人想过"
+  </p>
+</section>
+
+<!-- Slide 4: Stability - Problem -->
+<section>
+  <span class="section-badge badge-stability">稳定性</span>
+  <h2>逻辑没错，为什么上线还是出问题？</h2>
+  <p style="font-size:0.7em; color:#aaa; margin:15px 0;">答案：<span class="highlight-pink">运行时条件超出预期</span></p>
+  <ul class="clean pink">
+    <li>下游接口平时 50ms，今天 5 秒</li>
+    <li>重试逻辑正常情况没问题，下游挂了后把对方打死</li>
+    <li>流量突然翻 10 倍</li>
+    <li>慢查询占住连接池，其他请求全超时</li>
+  </ul>
+  <p style="font-size:0.65em; color:#ff6a88; margin-top:15px; font-weight:600;">
+    这些都不是 bug，但影响可能比 bug 严重得多
+  </p>
+</section>
+
+<!-- Slide 5: Stability - Four Aspects -->
+<section>
+  <span class="section-badge badge-stability">稳定性</span>
+  <h2>四个基本防线</h2>
+  <div class="four-grid" style="margin-top:20px;">
+    <div class="four-card" style="border:1px solid rgba(255,106,136,0.3);">
+      <h4 style="color:#ff6a88;">超时</h4>
+      <p>任何外部调用都必须设超时<br>不设 = 线程被无限期占住</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(246,211,101,0.3);">
+      <h4 style="color:#f6d365;">重试</h4>
+      <p>要幂等、要递增间隔、要有上限<br>否则可能把下游打挂</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(102,126,234,0.3);">
+      <h4 style="color:#82aaff;">降级</h4>
+      <p>区分核心和非核心<br>非核心挂了不该影响整体</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(67,233,123,0.3);">
+      <h4 style="color:#43e97b;">资源保护</h4>
+      <p>线程池隔离、连接池保护<br>一个慢请求不能拖垮全部</p>
+    </div>
+  </div>
+  <p style="font-size:0.68em; color:#43e97b; margin-top:15px; font-weight:600;">
+    不是"高级功能"，而是服务端代码的基本功
+  </p>
+</section>
+
+<!-- Slide 6: Observability -->
+<section>
+  <span class="section-badge badge-observability">可观测性</span>
+  <h2>出了问题，先看什么？</h2>
+  <p style="font-size:0.65em; color:#aaa; margin-bottom:15px;">很多人第一反应是翻日志 → 在几十万条记录里大海捞针</p>
+  <div class="arch-flow" style="margin:20px auto;">
+    <div class="arch-box" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3); color:#f6d365;">指标 Metrics</div>
+    <div class="flow-arrow">→</div>
+    <div class="arch-box" style="background:rgba(102,126,234,0.15); border:1px solid rgba(102,126,234,0.3); color:#82aaff;">Trace 链路</div>
+    <div class="flow-arrow">→</div>
+    <div class="arch-box" style="background:rgba(67,233,123,0.15); border:1px solid rgba(67,233,123,0.3); color:#43e97b;">日志 Logs</div>
+  </div>
+  <table class="styled" style="margin-top:15px;">
+    <thead>
+      <tr><th>工具</th><th>回答什么</th><th>什么时候看</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:#f6d365;">指标</td><td>系统整体是否正常</td><td>第一时间判断方向</td></tr>
+      <tr><td style="color:#82aaff;">Trace</td><td>哪个节点出了问题</td><td>缩小范围，定位节点</td></tr>
+      <tr><td style="color:#43e97b;">日志</td><td>具体发生了什么</td><td>最后确认根因</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Slide 7: Release Flow -->
+<section>
+  <span class="section-badge badge-release">上线</span>
+  <h2>不只是合并代码</h2>
+  <div class="flow" style="margin:25px auto;">
+    <span class="flow-step" style="background:rgba(102,126,234,0.15); border:1px solid rgba(102,126,234,0.3);">代码合并</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3);">上线前检查</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(67,233,123,0.15); border:1px solid rgba(67,233,123,0.3);">灰度发布</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.3);">上线后观测</span>
+  </div>
+  <div class="domain-grid" style="margin-top:20px;">
+    <div class="domain-card" style="border-color:rgba(246,211,101,0.3);">
+      <h4 style="color:#f6d365;">上线前检查</h4>
+      <p>配置就绪？依赖就绪？数据兼容？发布顺序？</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(67,233,123,0.3);">
+      <h4 style="color:#43e97b;">灰度发布</h4>
+      <p>1% → 10% → 50% → 100%<br>问题影响范围可控</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(161,140,209,0.3);">
+      <h4 style="color:#a18cd1;">上线后观测</h4>
+      <p>错误率、P99、业务指标、资源消耗</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,106,136,0.3);">
+      <h4 style="color:#ff6a88;">回滚</h4>
+      <p>不是丢人的事，是最基本的安全网</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 8: Pitfalls -->
+<section>
+  <span class="section-badge badge-pitfall">常见误区</span>
+  <h2>四个典型问题</h2>
+  <div class="four-grid" style="margin-top:20px;">
+    <div class="four-card" style="border:1px solid rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">测试只关注正常流程</h4>
+      <p>真正出事的是边界条件</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">可观测性 = 打日志</h4>
+      <p>没指标没Trace，定位效率极低</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">稳定性是后面再加的事</h4>
+      <p>上线后再补成本高得多</p>
+    </div>
+    <div class="four-card" style="border:1px solid rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">上线 = 部署成功</h4>
+      <p>灰度+观测+确认才算完成</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 9: Summary -->
+<section>
+  <span class="section-badge badge-summary">总结</span>
+  <h2>完整闭环</h2>
+  <div class="flow" style="margin:30px auto;">
+    <span class="flow-step" style="background:rgba(102,126,234,0.2); border:1px solid rgba(102,126,234,0.4);">测试<br><span style="font-size:0.8em; color:#aaa;">建立信心</span></span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(255,106,136,0.2); border:1px solid rgba(255,106,136,0.4);">稳定性<br><span style="font-size:0.8em; color:#aaa;">运行时保护</span></span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(246,211,101,0.2); border:1px solid rgba(246,211,101,0.4);">可观测性<br><span style="font-size:0.8em; color:#aaa;">发现定位</span></span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(67,233,123,0.2); border:1px solid rgba(67,233,123,0.4);">上线<br><span style="font-size:0.8em; color:#aaa;">安全交付</span></span>
+  </div>
+  <p class="takeaway" style="margin-top:30px;">
+    会开发 + 能交付<br>= 服务端工程师的最小闭环
+  </p>
+</section>
+
+<!-- Slide 10: End -->
+<section class="end-slide">
+  <h1>Thanks</h1>
+  <p style="font-size:0.8em; color:#888; margin-top:30px;">测试 + 稳定性 + 可观测性 + 上线 = 交付闭环</p>
+</section>
+
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  controls: true,
+  progress: true,
+  center: true,
+  transition: 'slide',
+  width: 1280,
+  height: 720
+});
+</script>
+</body>
+</html>

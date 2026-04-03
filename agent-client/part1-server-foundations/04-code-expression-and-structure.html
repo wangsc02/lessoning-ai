@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务端代码表达与工程组织</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root {
+  --r-main-font: 'Noto Sans SC', sans-serif;
+  --r-heading-font: 'Noto Sans SC', sans-serif;
+  --r-main-font-size: 32px;
+}
+.reveal { font-family: 'Noto Sans SC', sans-serif; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: 'Noto Sans SC', sans-serif; font-weight: 700; }
+.reveal h1 { font-size: 2.2em; }
+.reveal h2 { font-size: 1.5em; }
+.reveal h3 { font-size: 1.1em; }
+
+/* Cover */
+.cover-slide h1 { font-size: 2.2em; font-weight: 900; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3em; }
+.cover-slide .subtitle { font-size: 1.1em; color: #aaa; margin-bottom: 2em; }
+
+/* Section badge */
+.section-badge { display: inline-block; padding: 6px 20px; border-radius: 30px; font-size: 0.6em; font-weight: 500; margin-bottom: 0.5em; letter-spacing: 2px; }
+.badge-express { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a1a2e; }
+.badge-organize { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.badge-practice { background: linear-gradient(135deg, #f6d365, #fda085); color: #1a1a2e; }
+.badge-pitfall { background: linear-gradient(135deg, #ff6a88, #ff99ac); color: #1a1a2e; }
+
+/* Quote */
+.quote-box { background: rgba(255,255,255,0.05); border-left: 4px solid #667eea; padding: 20px 30px; border-radius: 0 12px 12px 0; margin: 20px auto; max-width: 85%; text-align: left; font-size: 0.85em; font-style: italic; color: #ccc; }
+
+/* Code block */
+.code-box { background: #1e1e3f; border-radius: 12px; padding: 20px 30px; margin: 15px auto; max-width: 88%; text-align: left; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.58em; line-height: 1.6; color: #a9b7c6; overflow-x: auto; }
+.code-box .keyword { color: #c792ea; }
+.code-box .type { color: #82aaff; }
+.code-box .string { color: #c3e88d; }
+.code-box .comment { color: #546e7a; }
+.code-box .annotation { color: #ffcb6b; }
+
+/* Bullet list */
+.reveal ul.clean { list-style: none; padding: 0; text-align: left; max-width: 85%; margin: 0 auto; }
+.reveal ul.clean li { padding: 10px 0; font-size: 0.8em; line-height: 1.5; color: #ddd; position: relative; padding-left: 28px; }
+.reveal ul.clean li::before { content: ''; position: absolute; left: 0; top: 18px; width: 12px; height: 12px; border-radius: 50%; }
+.reveal ul.clean.green li::before { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.reveal ul.clean.orange li::before { background: linear-gradient(135deg, #f6d365, #fda085); }
+.reveal ul.clean.purple li::before { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+.reveal ul.clean.blue li::before { background: linear-gradient(135deg, #667eea, #764ba2); }
+.reveal ul.clean.pink li::before { background: linear-gradient(135deg, #ff6a88, #ff99ac); }
+
+/* Highlight */
+.highlight { color: #ffd700; font-weight: 700; }
+.highlight-blue { color: #82aaff; font-weight: 700; }
+.highlight-green { color: #43e97b; font-weight: 700; }
+.highlight-pink { color: #ff6a88; font-weight: 700; }
+
+/* Grid */
+.domain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 90%; margin: 20px auto; }
+.domain-card { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 18px 20px; text-align: left; border: 1px solid rgba(255,255,255,0.08); }
+.domain-card h4 { margin: 0 0 8px; font-size: 0.75em; }
+.domain-card p { margin: 0; font-size: 0.6em; color: #aaa; line-height: 1.5; }
+
+/* Flow */
+.flow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 20px auto; flex-wrap: wrap; }
+.flow-step { background: rgba(255,255,255,0.08); padding: 12px 20px; border-radius: 10px; font-size: 0.7em; font-weight: 500; }
+.flow-arrow { font-size: 1.2em; color: #667eea; }
+
+/* Takeaway */
+.takeaway { font-size: 1.3em; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; max-width: 80%; margin: 0 auto; line-height: 1.6; }
+
+/* End slide */
+.end-slide h1 { font-size: 2.5em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Table */
+.reveal table.styled { width: 90%; margin: 20px auto; font-size: 0.55em; border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; }
+.reveal table.styled thead tr { background: rgba(102,126,234,0.3); }
+.reveal table.styled th { padding: 12px 10px; text-align: left; font-weight: 600; }
+.reveal table.styled td { padding: 10px; }
+.reveal table.styled tbody tr:nth-child(odd) { background: rgba(255,255,255,0.03); }
+.reveal table.styled tbody tr:nth-child(even) { background: rgba(255,255,255,0.06); }
+
+.small-text { font-size: 0.7em; color: #999; margin-top: 20px; }
+
+/* Compare box */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 90%; margin: 20px auto; }
+.compare-box { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 18px 20px; text-align: left; }
+.compare-box h4 { margin: 0 0 12px; font-size: 0.7em; }
+.compare-box ul { margin: 0; padding-left: 18px; font-size: 0.6em; color: #bbb; }
+.compare-box ul li { margin-bottom: 6px; }
+.compare-box.do { border: 1px solid rgba(67,233,123,0.3); }
+.compare-box.dont { border: 1px solid rgba(255,80,80,0.3); }
+
+/* Layer diagram */
+.layer-diagram { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 20px auto; }
+.layer-box { padding: 12px 30px; border-radius: 10px; font-size: 0.65em; font-weight: 500; min-width: 200px; text-align: center; }
+.layer-arrow { color: #667eea; font-size: 1em; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- Slide 1: Cover -->
+<section class="cover-slide">
+  <h1>服务端代码表达与工程组织</h1>
+  <p class="subtitle">Java、Spring 与分层边界</p>
+</section>
+
+<!-- Slide 2: Context -->
+<section>
+  <h2>先把边界划清楚</h2>
+  <div class="compare-grid">
+    <div class="compare-box do" style="border-color:rgba(246,211,101,0.3);">
+      <h4 style="color:#f6d365;">第三篇：对外</h4>
+      <ul>
+        <li>HTTP</li>
+        <li>RPC</li>
+        <li>跨业务边界的接口</li>
+        <li>系统对外怎么协作</li>
+      </ul>
+    </div>
+    <div class="compare-box do" style="border-color:rgba(102,126,234,0.3);">
+      <h4 style="color:#82aaff;">这一篇：对内</h4>
+      <ul>
+        <li>Controller / RPC Handler</li>
+        <li>Logic / Service</li>
+        <li>Repository / Storage</li>
+        <li>系统对内怎么组织</li>
+      </ul>
+    </div>
+  </div>
+  <p style="font-size:0.72em; color:#aaa; margin-top:20px;">
+    对外接口设计得再清楚，如果进程内代码表达混乱，系统还是会很快腐化
+  </p>
+</section>
+
+<!-- Slide 3: Core Judgment -->
+<section>
+  <h2>我的理解是</h2>
+  <div style="display:flex; justify-content:center; align-items:stretch; gap:30px; margin:30px auto; max-width:90%;">
+    <div style="flex:1; max-width:280px; text-align:center; display:flex; flex-direction:column;">
+      <div style="font-size:0.75em; font-weight:600; color:#43e97b; margin-bottom:15px;">Java</div>
+      <div style="background:rgba(67,233,123,0.08); border:1px solid rgba(67,233,123,0.25); border-radius:10px; padding:20px; flex:1; display:flex; align-items:center; justify-content:center;">
+        <div style="font-size:0.8em; color:#43e97b; font-weight:600;">表达工具</div>
+      </div>
+      <div style="font-size:0.6em; color:#aaa; margin-top:10px;">这段代码到底在表达什么？</div>
+    </div>
+    <div style="display:flex; align-items:center; font-size:1.5em; color:#667eea; font-weight:700;">+</div>
+    <div style="flex:1; max-width:280px; text-align:center; display:flex; flex-direction:column;">
+      <div style="font-size:0.75em; font-weight:600; color:#82aaff; margin-bottom:15px;">Spring</div>
+      <div style="background:rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.25); border-radius:10px; padding:20px; flex:1; display:flex; align-items:center; justify-content:center;">
+        <div style="font-size:0.8em; color:#82aaff; font-weight:600;">组织工具</div>
+      </div>
+      <div style="font-size:0.6em; color:#aaa; margin-top:10px;">这段代码到底应该放在哪里？</div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 4: Java vs Spring Table -->
+<section>
+  <h2>Java 与 Spring 的分工</h2>
+  <table class="styled">
+    <thead>
+      <tr><th>维度</th><th style="color:#43e97b;">Java 主要解决</th><th style="color:#82aaff;">Spring 主要解决</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>类型</td><td>输入输出是什么</td><td>这些对象怎么被装配</td></tr>
+      <tr><td>方法签名</td><td>调用方能传什么、拿到什么</td><td>这些职责落在哪一层</td></tr>
+      <tr><td>异常</td><td>什么是正常分支，什么是异常分支</td><td>异常和依赖如何沿分层流动</td></tr>
+      <tr><td>集合 / Optional</td><td>"没有"该如何表达</td><td>哪一层负责解释这个"没有"</td></tr>
+      <tr><td>代码组织</td><td>逻辑有没有说清楚</td><td>系统有没有组织清楚</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===== Part 1: Expression ===== -->
+<section>
+  <span class="section-badge badge-express">第一部分</span>
+  <h2>先把"表达"写清楚</h2>
+  <p class="takeaway" style="font-size:1em; margin-top:50px;">
+    如何用 Java<br>
+    把意图写清楚
+  </p>
+</section>
+
+<!-- Slide: Types -->
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>类型不是搬运工，而是边界说明书</h2>
+  <table class="styled">
+    <thead>
+      <tr><th>类型</th><th>主要职责</th><th>常见出现位置</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:#f6d365;">DTO / 请求响应模型</td><td>表达对外输入输出</td><td>Controller / RPC Handler</td></tr>
+      <tr><td style="color:#f6d365;">VO</td><td>面向展示或接口返回</td><td>Web 返回层</td></tr>
+      <tr><td style="color:#82aaff;">BO</td><td>表达业务语义和领域状态</td><td>Service / Domain</td></tr>
+      <tr><td style="color:#a18cd1;">PO</td><td>表达持久化结构</td><td>Storage / Repository</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>类型最怕什么</h2>
+  <div class="quote-box">
+    同一个对象从入口一路传到数据库，再一路传回来
+  </div>
+  <ul class="clean pink" style="margin-top:25px;">
+    <li>对外字段改了，内部逻辑跟着抖</li>
+    <li>数据库存储结构泄漏到业务层</li>
+    <li>业务语义和展示语义混在一起</li>
+  </ul>
+  <p style="font-size:0.72em; color:#43e97b; margin-top:25px; font-weight:600;">
+    入口模型不等于内部业务模型
+  </p>
+</section>
+
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>类型的真正价值</h2>
+  <div class="domain-grid">
+    <div class="domain-card" style="border-color:rgba(67,233,123,0.3);">
+      <h4 style="color:#43e97b;">给新手的解释</h4>
+      <p>类型不是为了显得专业<br>而是为了减少"这个字段到底代表什么"的猜测</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(102,126,234,0.3);">
+      <h4 style="color:#82aaff;">更深的判断</h4>
+      <p>类型系统不是附属品<br>它本身就是业务边界的一部分</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide: Method Signature -->
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>方法签名在提前声明调用约定</h2>
+  <div class="code-box">
+    <span class="keyword">public interface</span> <span class="type">LessonUserMissionService</span> {<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">void</span> createOrUpdateStatusToValidIfExist(<span class="type">LessonUserMissionBO</span> userMission)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">throws</span> <span class="type">DuplicateKeyException</span>;<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="type">Optional</span>&lt;<span class="type">LessonUserMissionBO</span>&gt; getValidUserMissionByUserIdAndMissionIdFromReader(<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">long</span> userId, <span class="keyword">long</span> missionId);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="type">List</span>&lt;<span class="type">LessonUserMissionBO</span>&gt; getValidUserMissionByUserIdAndMissionIdsFromReader(<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">long</span> userId, <span class="type">List</span>&lt;<span class="type">Long</span>&gt; missionIds);<br>
+    }
+  </div>
+</section>
+
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>三种签名，三种语义</h2>
+  <table class="styled">
+    <thead>
+      <tr><th>签名模式</th><th>表达的语义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:#ff6a88;">void + exception</td><td>重点是"做这个动作"，失败时走异常路径</td></tr>
+      <tr><td style="color:#f6d365;">Optional&lt;T&gt;</td><td>查询单个对象，结果可能不存在</td></tr>
+      <tr><td style="color:#43e97b;">List&lt;T&gt;</td><td>查询多个对象，没有结果时返回空集合</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.72em; color:#aaa; margin-top:20px;">
+    让调用方在读签名时就有稳定预期
+  </p>
+</section>
+
+<!-- Slide: Optional, Empty, Exception -->
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>Optional、空集合、异常分别保护什么</h2>
+  <table class="styled">
+    <thead>
+      <tr><th>表达方式</th><th>主要保护什么</th><th>适用场景</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:#f6d365;">Optional&lt;T&gt;</td><td>"没有这个对象"是正常情况</td><td>单对象可能不存在</td></tr>
+      <tr><td style="color:#43e97b;">空集合</td><td>"没有这些数据"是正常情况</td><td>批量查询没数据</td></tr>
+      <tr><td style="color:#ff6a88;">异常</td><td>继续往下执行已经不合理</td><td>参数非法、状态非法、系统故障</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.72em; color:#ff6a88; margin-top:20px; font-weight:600;">
+    最容易踩的坑：什么都返回 null，什么都靠异常表达
+  </p>
+</section>
+
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>推荐的表达方式</h2>
+  <ul class="clean green">
+    <li><span class="highlight-pink">null</span> — 尽量限制在遗留代码或框架边界</li>
+    <li><span class="highlight">Optional&lt;T&gt;</span> — 只用于"单对象可能不存在"</li>
+    <li><span class="highlight-green">空集合</span> — 用于"批量查询没数据"</li>
+    <li><span class="highlight-pink">异常</span> — 用于"这条路径不该被当作普通成功分支继续"</li>
+  </ul>
+</section>
+
+<!-- Slide: Stream vs For -->
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>for 循环和 Stream：判断标准是什么</h2>
+  <div class="quote-box">
+    判断标准不该是"够不够现代"<br>
+    而应该是：<span style="color:#ffd700;">这段代码到底是在表达规则，还是在炫操作</span>
+  </div>
+  <table class="styled" style="margin-top:25px;">
+    <thead>
+      <tr><th>场景</th><th>更推荐</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>简单映射、过滤、收集</td><td style="color:#43e97b;">Stream</td></tr>
+      <tr><td>中间有多步条件分支、日志、副作用</td><td style="color:#f6d365;">普通 for 循环</td></tr>
+      <tr><td>需要短路退出、错误处理、分阶段命名</td><td style="color:#f6d365;">普通 for 循环</td></tr>
+      <tr><td>一眼就能看懂的数据变换</td><td style="color:#43e97b;">Stream</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <span class="section-badge badge-express">表达</span>
+  <h2>Stream 好例子</h2>
+  <div class="code-box">
+    <span class="keyword">return</span> lessonMissionService.getByIdsFromReader(oralLessonMissionIds)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;.values().stream()<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;.map(tLessonMissionWrapper::wrap)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;.collect(<span class="type">Collectors</span>.toMap(<span class="type">TLessonMission</span>::getId, <span class="type">Function</span>.identity()));
+  </div>
+  <p style="font-size:0.75em; color:#aaa; margin-top:20px;">只做三件事：取值 → 转换 → 收集</p>
+  <div class="quote-box" style="margin-top:25px;">
+    如果你需要停下来从左到右解码这条链<br>
+    它就可能已经不够清楚了
+  </div>
+</section>
+
+<!-- ===== Part 2: Organization ===== -->
+<section>
+  <span class="section-badge badge-organize">第二部分</span>
+  <h2>再把"组织"理清楚</h2>
+  <p class="takeaway" style="font-size:1em; margin-top:50px;">
+    如何用 Spring<br>
+    把系统组织成可维护的结构
+  </p>
+</section>
+
+<!-- Slide: Entry Layer -->
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>入口层的职责：接协议，不是接全部业务</h2>
+  <div class="compare-grid">
+    <div class="compare-box do">
+      <h4 style="color:#43e97b;">应该做</h4>
+      <ul>
+        <li>接收请求</li>
+        <li>提取上下文</li>
+        <li>做轻量校验</li>
+        <li>调用下层</li>
+        <li>把结果翻译成外部协议可理解的形式</li>
+      </ul>
+    </div>
+    <div class="compare-box dont">
+      <h4 style="color:#ff5050;">不应该做</h4>
+      <ul>
+        <li>复杂业务规则</li>
+        <li>多步状态流转</li>
+        <li>SQL 拼接</li>
+        <li>跨多个存储对象的编排</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>入口层承担太多业务的后果</h2>
+  <ul class="clean pink">
+    <li>同一个逻辑在 HTTP 和 RPC 入口各写一遍</li>
+    <li>入口层和业务层的异常语义开始互相污染</li>
+  </ul>
+  <p style="font-size:0.8em; color:#667eea; margin-top:30px; font-weight:600;">名字可以不同，但职责要稳定</p>
+  <div class="flow" style="margin-top:20px;">
+    <span class="flow-step">谁负责接协议</span>
+    <span class="flow-step">谁负责编排流程</span>
+    <span class="flow-step">谁负责业务规则</span>
+    <span class="flow-step">谁负责持久化</span>
+  </div>
+</section>
+
+<!-- Slide: Flow Layer -->
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>流程层：组织事情发生</h2>
+  <div class="code-box">
+    <span class="annotation">@Service</span><br>
+    <span class="keyword">public class</span> <span class="type">VersionInfoLogicImpl</span> <span class="keyword">implements</span> <span class="type">VersionInfoLogic</span> {<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="annotation">@Override</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public</span> <span class="type">RestResp</span>&lt;<span class="type">VersionInfoVO</span>&gt; get() {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">int</span> productId = getProductId();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">PlanetConst.Product</span> product = <span class="type">PlanetConst.Product</span>.fromId(productId);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">VersionInfoVO</span> versionInfoVO = <span class="keyword">new</span> <span class="type">VersionInfoVO</span>();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;versionInfoVO.setPlatform(product.getPlatform().name());<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;versionInfoVO.setMinVersion(conanPlanetProxy.getOralOrientedConfigMinVersion...);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="type">RestResp</span>.success(versionInfoVO);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+    }
+  </div>
+  <p style="font-size:0.68em; color:#aaa; margin-top:15px;">组织调用顺序 · 把上下文装成有意义的数据 · 把下游结果装成返回对象</p>
+</section>
+
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>流程层的边界</h2>
+  <div class="quote-box">
+    流程层负责编排，不代表所有业务规则都应该堆在这里
+  </div>
+  <p style="font-size:0.75em; color:#aaa; margin-top:25px;">如果某段规则：</p>
+  <ul class="clean blue">
+    <li>会被多个入口复用</li>
+    <li>本身有明确业务语义</li>
+    <li>不应该依赖 HTTP / RPC 上下文</li>
+  </ul>
+  <p style="font-size:0.72em; color:#667eea; margin-top:20px; font-weight:600;">
+    那它通常更适合下沉到领域服务或核心服务层
+  </p>
+</section>
+
+<!-- Slide: Business Layer vs Storage Layer -->
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>业务层 vs 存储层</h2>
+  <div style="display:flex; justify-content:center; align-items:stretch; gap:25px; margin:25px auto; max-width:92%;">
+    <div style="flex:1; max-width:320px; display:flex; flex-direction:column;">
+      <div style="font-size:0.7em; font-weight:600; color:#82aaff; margin-bottom:12px; text-align:center;">业务层</div>
+      <div style="background:rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.25); border-radius:10px; padding:15px; flex:1;">
+        <div style="font-size:0.6em; color:#bbb; line-height:1.8; text-align:left;">
+          • 先做入参保护<br>
+          • 用分布式锁保护并发<br>
+          • 把"创建或恢复状态"作为完整业务动作<br>
+          • 业务动作完成后发布事件
+        </div>
+      </div>
+      <div style="font-size:0.6em; color:#82aaff; margin-top:10px; text-align:center;">
+        定义"发生什么才算业务上成立"
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; font-size:1.2em; color:#667eea;">vs</div>
+    <div style="flex:1; max-width:320px; display:flex; flex-direction:column;">
+      <div style="font-size:0.7em; font-weight:600; color:#a18cd1; margin-bottom:12px; text-align:center;">存储层</div>
+      <div style="background:rgba(161,140,209,0.08); border:1px solid rgba(161,140,209,0.25); border-radius:10px; padding:15px; flex:1;">
+        <div style="font-size:0.6em; color:#bbb; line-height:1.8; text-align:left;">
+          • 接收持久化对象<br>
+          • 发 SQL<br>
+          • 返回结果<br>
+          &nbsp;
+        </div>
+      </div>
+      <div style="font-size:0.6em; color:#a18cd1; margin-top:10px; text-align:center;">
+        执行"把数据怎么存进去"
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>存储层不该知道什么</h2>
+  <ul class="clean purple">
+    <li>为什么这次写库是"创建"</li>
+    <li>为什么撞唯一键后要恢复状态</li>
+    <li>为什么成功后要发事件</li>
+  </ul>
+  <p style="font-size:0.75em; color:#a18cd1; margin-top:30px; font-weight:600;">
+    这些都应该被收在业务层
+  </p>
+</section>
+
+<!-- Slide: Spring's Real Value -->
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>Spring 的真正价值</h2>
+  <div class="quote-box">
+    Spring 真正厉害的地方，不是帮你把对象 new 出来<br>
+    而是帮你把<span style="color:#ffd700;">系统结构固定下来</span>
+  </div>
+  <p style="font-size:0.75em; color:#aaa; margin-top:30px;">理想的依赖方向：</p>
+  <div class="layer-diagram">
+    <div class="layer-box" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3); color:#f6d365;">Controller / RPC Handler</div>
+    <div class="layer-arrow">↓</div>
+    <div class="layer-box" style="background:rgba(102,126,234,0.15); border:1px solid rgba(102,126,234,0.3); color:#82aaff;">Logic / AppService</div>
+    <div class="layer-arrow">↓</div>
+    <div class="layer-box" style="background:rgba(130,170,255,0.15); border:1px solid rgba(130,170,255,0.3); color:#82aaff;">Domain Service</div>
+    <div class="layer-arrow">↓</div>
+    <div class="layer-box" style="background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.3); color:#a18cd1;">Repository / Storage</div>
+  </div>
+</section>
+
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>依赖方向乱了会怎样</h2>
+  <div class="flow">
+    <span class="flow-step" style="background:rgba(255,80,80,0.15); border:1px solid rgba(255,80,80,0.3);">Storage 反依赖 Service</span>
+    <span class="flow-step" style="background:rgba(255,80,80,0.15); border:1px solid rgba(255,80,80,0.3);">Controller 直接操作数据库</span>
+    <span class="flow-step" style="background:rgba(255,80,80,0.15); border:1px solid rgba(255,80,80,0.3);">ServiceA 和 B 双向互调</span>
+  </div>
+  <p style="font-size:0.75em; color:#aaa; margin-top:25px;">你会失去这些能力：</p>
+  <ul class="clean pink">
+    <li>看目录就理解职责</li>
+    <li>替换某层实现而不牵连全局</li>
+    <li>在代码评审时快速判断"这段逻辑放错层了"</li>
+  </ul>
+</section>
+
+<!-- Slide: Interface -->
+<section>
+  <span class="section-badge badge-organize">组织</span>
+  <h2>什么时候该抽接口</h2>
+  <div class="compare-grid">
+    <div class="compare-box do">
+      <h4 style="color:#43e97b;">适合抽接口</h4>
+      <ul>
+        <li>确实存在多种实现</li>
+        <li>对外暴露的是稳定能力</li>
+        <li>某层需要以接口作为边界，便于替换、扩展或隔离</li>
+      </ul>
+    </div>
+    <div class="compare-box dont">
+      <h4 style="color:#ff5050;">不必急着抽接口</h4>
+      <ul>
+        <li>目前只有一个实现，短期没有替换需求</li>
+        <li>这个类本身就是局部细节</li>
+        <li>抽出来后除了多一层跳转没有额外收益</li>
+      </ul>
+    </div>
+  </div>
+  <p style="font-size:0.72em; color:#667eea; margin-top:20px; font-weight:600;">
+    接口是边界工具，不是排版工具
+  </p>
+</section>
+
+<!-- ===== Example ===== -->
+<section>
+  <span class="section-badge badge-practice">最小工程案例</span>
+  <h2>同一个动作，在不同层表达什么</h2>
+  <p style="font-size:0.75em; color:#aaa;">以 createLessonUserMission 为例</p>
+  <div style="display:flex; flex-direction:column; gap:12px; max-width:85%; margin:25px auto;">
+    <div style="background:rgba(246,211,101,0.08); border:1px solid rgba(246,211,101,0.25); border-radius:10px; padding:12px 18px;">
+      <span style="font-size:0.65em; color:#f6d365; font-weight:600;">入口层</span>
+      <span style="font-size:0.6em; color:#aaa; margin-left:15px;">怎么接这个调用 — RPC 方法签名、判断任务是否存在、翻译成响应结构</span>
+    </div>
+    <div style="background:rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.25); border-radius:10px; padding:12px 18px;">
+      <span style="font-size:0.65em; color:#82aaff; font-weight:600;">业务层</span>
+      <span style="font-size:0.6em; color:#aaa; margin-left:15px;">这个动作业务上算什么 — 创建任务、已存在则恢复有效状态、发布后续事件</span>
+    </div>
+    <div style="background:rgba(161,140,209,0.08); border:1px solid rgba(161,140,209,0.25); border-radius:10px; padding:12px 18px;">
+      <span style="font-size:0.65em; color:#a18cd1; font-weight:600;">存储层</span>
+      <span style="font-size:0.6em; color:#aaa; margin-left:15px;">这批数据怎么落库 — 插入哪张表、用哪些字段、撞唯一键抛什么异常</span>
+    </div>
+  </div>
+  <p style="font-size:0.72em; color:#667eea; margin-top:20px; font-weight:600;">
+    同一个需求，不是只写一段代码，而是在不同层分别表达不同类型的信息
+  </p>
+</section>
+
+<!-- ===== Pitfalls ===== -->
+<section>
+  <span class="section-badge badge-pitfall">常见误区</span>
+  <h2>会写注解 ≠ 分层已经完成</h2>
+  <div class="flow">
+    <span class="flow-step">@RestController</span>
+    <span class="flow-step">@Service</span>
+    <span class="flow-step">@Repository</span>
+  </div>
+  <p style="font-size:0.75em; color:#aaa; margin-top:25px;">分层真正要看的是：</p>
+  <ul class="clean pink">
+    <li>职责有没有分开</li>
+    <li>依赖方向有没有守住</li>
+    <li>异常语义有没有在正确层被解释</li>
+  </ul>
+</section>
+
+<section>
+  <span class="section-badge badge-pitfall">常见误区</span>
+  <h2>其他典型问题</h2>
+  <div class="domain-grid">
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">入口层越来越胖</h4>
+      <p>Controller 开始承担参数组装、业务分支判断、多次下游调用、数据库存取</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">什么都返回 null，什么都用异常兜</h4>
+      <p>最隐蔽的表达退化<br>长期会把调用方训练成：先猜、再试、最后靠日志定位</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">Stream 用得很现代，但代码读不清楚</h4>
+      <p>服务端代码不是比赛谁更函数式<br>如果读者看不出"这段逻辑在做什么"，就该回到更直接的表达</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">抽象很多，但没有一个真正在隔离变化</h4>
+      <p>接口、包装类、转换器越来越多<br>可能只是在用多一层类来缓冲不确定感</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Takeaway ===== -->
+<section>
+  <h2>希望形成的感觉</h2>
+  <ul class="clean blue">
+    <li><span class="highlight-green">入口层</span>负责接协议，别把业务全塞进去</li>
+    <li><span class="highlight">流程层</span>负责组织调用顺序，别和协议细节缠在一起</li>
+    <li><span class="highlight-blue">业务层</span>负责把规则收住，别只是机械调用几个方法</li>
+    <li><span class="highlight-pink">存储层</span>负责和数据打交道，别偷带业务判断</li>
+  </ul>
+</section>
+
+<section>
+  <h2>看方法签名时，更在意这些问题</h2>
+  <ul class="clean green">
+    <li>这里表达的是正常分支，还是异常分支</li>
+    <li>这里适合用 Optional、空集合，还是明确失败</li>
+    <li>这个对象到底是在表达接口、业务，还是持久化结构</li>
+  </ul>
+  <p style="font-size:0.75em; color:#aaa; margin-top:30px;">
+    到这一步，Java 和 Spring 才算真正连在一起了
+  </p>
+</section>
+
+<section>
+  <h2 style="margin-bottom: 40px;">核心 Takeaway</h2>
+  <p class="takeaway">服务端代码不只是能跑<br>还应该让后来的人<br>看得懂、改得动<br>也知道风险在哪里</p>
+</section>
+
+<!-- Slide: End -->
+<section class="end-slide">
+  <h1>Thanks</h1>
+  <p style="font-size:0.8em; color:#888; margin-top:30px;">Java 是表达工具，Spring 是组织工具。</p>
+</section>
+
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  controls: true,
+  progress: true,
+  center: true,
+  transition: 'slide',
+  width: 1280,
+  height: 720
+});
+</script>
+</body>
+</html>

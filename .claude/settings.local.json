@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_navigate",
+      "Bash(open:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:www.developeronboarding.com)",
+      "WebFetch(domain:roadmap.sh)",
+      "WebFetch(domain:developers.google.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:martinfowler.com)",
+      "Bash(rm 07-stability-testing-observability-and-release.html)",
+      "Bash(mv 07-stability-testing-observability-and-release-compact.html 07-stability-testing-observability-and-release.html)"
+    ]
+  }
+}

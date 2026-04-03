@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务端认知的五层进化</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root {
+  --r-main-font: 'Noto Sans SC', sans-serif;
+  --r-heading-font: 'Noto Sans SC', sans-serif;
+  --r-main-font-size: 32px;
+  --r-heading1-size: 2.2em;
+  --r-heading2-size: 1.6em;
+  --r-heading3-size: 1.2em;
+}
+.reveal { font-family: 'Noto Sans SC', sans-serif; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: 'Noto Sans SC', sans-serif; font-weight: 700; }
+.reveal h1 { font-size: 2.2em; }
+.reveal h2 { font-size: 1.5em; }
+.reveal h3 { font-size: 1.1em; }
+
+/* Cover */
+.cover-slide h1 { font-size: 2.4em; font-weight: 900; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3em; }
+.cover-slide .subtitle { font-size: 1.1em; color: #aaa; margin-bottom: 2em; }
+.cover-slide .author { font-size: 0.8em; color: #888; }
+
+/* Layer label */
+.layer-badge { display: inline-block; padding: 6px 20px; border-radius: 30px; font-size: 0.6em; font-weight: 500; margin-bottom: 0.5em; letter-spacing: 2px; }
+.layer-1 { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a1a2e; }
+.layer-2 { background: linear-gradient(135deg, #f6d365, #fda085); color: #1a1a2e; }
+.layer-3 { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #1a1a2e; }
+.layer-4 { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.layer-5 { background: linear-gradient(135deg, #ff6a88, #ff99ac); color: #1a1a2e; }
+
+/* Quote */
+.quote-box { background: rgba(255,255,255,0.05); border-left: 4px solid #667eea; padding: 20px 30px; border-radius: 0 12px 12px 0; margin: 20px auto; max-width: 85%; text-align: left; font-size: 0.85em; font-style: italic; color: #ccc; }
+
+/* Code block */
+.code-box { background: #1e1e3f; border-radius: 12px; padding: 20px 30px; margin: 15px auto; max-width: 85%; text-align: left; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.65em; line-height: 1.6; color: #a9b7c6; overflow-x: auto; }
+.code-box .keyword { color: #c792ea; }
+.code-box .type { color: #82aaff; }
+.code-box .string { color: #c3e88d; }
+.code-box .comment { color: #546e7a; }
+
+/* Bullet list */
+.reveal ul.clean { list-style: none; padding: 0; text-align: left; max-width: 85%; margin: 0 auto; }
+.reveal ul.clean li { padding: 10px 0; font-size: 0.8em; line-height: 1.5; color: #ddd; position: relative; padding-left: 28px; }
+.reveal ul.clean li::before { content: ''; position: absolute; left: 0; top: 18px; width: 12px; height: 12px; border-radius: 50%; }
+.reveal ul.clean.green li::before { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.reveal ul.clean.orange li::before { background: linear-gradient(135deg, #f6d365, #fda085); }
+.reveal ul.clean.purple li::before { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+.reveal ul.clean.blue li::before { background: linear-gradient(135deg, #667eea, #764ba2); }
+.reveal ul.clean.pink li::before { background: linear-gradient(135deg, #ff6a88, #ff99ac); }
+
+/* Highlight */
+.highlight { color: #ffd700; font-weight: 700; }
+.highlight-blue { color: #82aaff; font-weight: 700; }
+.highlight-green { color: #43e97b; font-weight: 700; }
+.highlight-pink { color: #ff6a88; font-weight: 700; }
+
+/* Grid table */
+.domain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 90%; margin: 20px auto; }
+.domain-card { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 18px 20px; text-align: left; border: 1px solid rgba(255,255,255,0.08); }
+.domain-card h4 { margin: 0 0 8px; font-size: 0.75em; }
+.domain-card p { margin: 0; font-size: 0.6em; color: #aaa; line-height: 1.5; }
+
+/* Flow diagram */
+.flow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 20px auto; flex-wrap: wrap; }
+.flow-step { background: rgba(255,255,255,0.08); padding: 12px 20px; border-radius: 10px; font-size: 0.7em; font-weight: 500; }
+.flow-arrow { font-size: 1.2em; color: #667eea; }
+
+/* Pyramid */
+.pyramid { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 20px auto; }
+.pyramid-level { padding: 12px; text-align: center; border-radius: 8px; font-size: 0.65em; font-weight: 500; color: #1a1a2e; }
+
+/* Takeaway */
+.takeaway { font-size: 1.3em; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; max-width: 80%; margin: 0 auto; line-height: 1.6; }
+
+/* End slide */
+.end-slide h1 { font-size: 2.5em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Dir tree */
+.dir-tree { background: #1e1e3f; border-radius: 12px; padding: 20px 30px; margin: 15px auto; max-width: 80%; text-align: left; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.55em; line-height: 1.7; color: #a9b7c6; }
+.dir-tree .folder { color: #82aaff; }
+.dir-tree .desc { color: #546e7a; }
+
+.small-text { font-size: 0.7em; color: #999; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- Slide 1: Cover -->
+<section class="cover-slide">
+  <h1>服务端认知的五层进化</h1>
+  <p class="subtitle">从 CRUD 到领域本质，一个工程师的认知跃迁之路</p>
+</section>
+
+<!-- Slide 2: Opening -->
+<section>
+  <h2>你是不是也这样想过？</h2>
+  <div class="quote-box">
+    "服务端不就是 CRUD 吗？Controller 接请求，Service 写逻辑，Storage 存数据，三层架构搞定一切。"
+  </div>
+  <p style="font-size:0.75em; color:#aaa; margin-top:30px;">如果你有过这些困惑，说明你正在经历<br><span class="highlight">服务端认知的必经之路</span></p>
+</section>
+
+<!-- Slide 3: Overview pyramid -->
+<section>
+  <h2>五层认知全景</h2>
+  <div class="pyramid">
+    <div class="pyramid-level" style="width:280px; background: linear-gradient(135deg, #ff6a88, #ff99ac);">第五层 · 领域本质</div>
+    <div class="pyramid-level" style="width:360px; background: linear-gradient(135deg, #667eea, #764ba2); color:#fff;">第四层 · 领域设计</div>
+    <div class="pyramid-level" style="width:440px; background: linear-gradient(135deg, #a18cd1, #fbc2eb);">第三层 · 中间件深水区</div>
+    <div class="pyramid-level" style="width:520px; background: linear-gradient(135deg, #f6d365, #fda085);">第二层 · 架构模式困惑期</div>
+    <div class="pyramid-level" style="width:600px; background: linear-gradient(135deg, #43e97b, #38f9d7);">第一层 · CRUD 万能论</div>
+  </div>
+  <p class="small-text">每一层都是下一层的基础，不可跳过</p>
+</section>
+
+<!-- ===== LAYER 1 ===== -->
+<section>
+  <span class="layer-badge layer-1">第一层</span>
+  <h2>CRUD 万能论</h2>
+  <div class="code-box">
+    <span class="type">Controller</span>  →  接收请求，返回响应<br>
+    <span class="type">Service</span>&nbsp;&nbsp;&nbsp;&nbsp; →  写业务逻辑<br>
+    <span class="type">Storage</span>&nbsp;&nbsp;&nbsp;&nbsp;→  操作数据库
+  </div>
+  <div class="quote-box">
+    "服务端真简单，不就是把前端传过来的数据存到数据库，再查出来返回吗？"
+  </div>
+</section>
+
+<section>
+  <span class="layer-badge layer-1">第一层</span>
+  <h2>什么时候撞墙？</h2>
+  <ul class="clean green">
+    <li>一个 Service 方法越写越长，几百行塞在一起</li>
+    <li>改一个功能要动好几个地方，<span class="highlight">牵一发而动全身</span></li>
+    <li>不同接口在重复写类似逻辑，但又不完全一样</li>
+    <li>出了问题很难定位，代码全糊在一起</li>
+  </ul>
+  <p style="font-size:0.75em; color:#43e97b; margin-top:30px; font-weight:700;">
+    三层架构只是代码的物理分层<br>并不能帮你管理业务复杂度
+  </p>
+</section>
+
+<!-- ===== LAYER 2 ===== -->
+<section>
+  <span class="layer-badge layer-2">第二层</span>
+  <h2>架构模式的困惑期</h2>
+  <div class="domain-grid">
+    <div class="domain-card"><h4 style="color:#f6d365;">PO</h4><p>Persistent Object · 数据库表的映射对象</p></div>
+    <div class="domain-card"><h4 style="color:#fda085;">DO</h4><p>Domain Object · 领域对象，承载业务逻辑</p></div>
+    <div class="domain-card"><h4 style="color:#f6d365;">DTO</h4><p>Data Transfer Object · 跨层数据传递</p></div>
+    <div class="domain-card"><h4 style="color:#fda085;">BO</h4><p>Business Object · Service 层业务对象</p></div>
+  </div>
+  <div class="quote-box">
+    "一个数据从数据库查出来，要转 PO → DO → DTO → VO……这不是自找麻烦吗？"
+  </div>
+</section>
+
+<section>
+  <span class="layer-badge layer-2">第二层</span>
+  <h2>这些"繁琐"解决了什么？</h2>
+  <ul class="clean orange">
+    <li><span class="highlight">边界隔离</span> — 数据库结构变了，只改 PO 和转换层，不影响上层业务</li>
+    <li><span class="highlight">职责清晰</span> — Controller 不知道数据库长什么样，Storage 不知道接口返回什么</li>
+    <li><span class="highlight">变更可控</span> — 重构某一层时，只要接口不变，其他层完全不动</li>
+  </ul>
+  <p style="font-size:0.72em; color:#fda085; margin-top:30px; font-weight:700;">
+    不是为了让开发更复杂<br>而是为了让长期维护更简单
+  </p>
+</section>
+
+<!-- ===== LAYER 3 ===== -->
+<section>
+  <span class="layer-badge layer-3">第三层</span>
+  <h2>中间件深水区</h2>
+  <div class="flow">
+    <span class="flow-step">JVM 调优</span>
+    <span class="flow-step">Redis 数据结构</span>
+    <span class="flow-step">MySQL 索引</span>
+    <span class="flow-step">MQ 消息模型</span>
+    <span class="flow-step">RPC 协议</span>
+  </div>
+  <div class="quote-box">
+    "技术能力 = 懂得多 + 记得住。我知道的底层原理越多，技术就越强。"
+  </div>
+</section>
+
+<section>
+  <span class="layer-badge layer-3">第三层</span>
+  <h2>这个阶段的陷阱</h2>
+  <ul class="clean purple">
+    <li><span class="highlight">懂原理 ≠ 会用好</span> — 知道五种数据结构，但场景判断需要的是经验不是背诵</li>
+    <li><span class="highlight">技术深度容易偏离业务</span> — 花一周研究 JVM 调优，一年可能用不上一次</li>
+    <li><span class="highlight">过度学习边际递减</span> — 跳表、MVCC 细节对 99% 业务开发是"锦上添花"</li>
+  </ul>
+  <p style="font-size:0.72em; color:#a18cd1; margin-top:30px; font-weight:700;">
+    真正的技术能力：在合适的场景选择合适的方案<br>并清楚知道选择的代价和收益
+  </p>
+</section>
+
+<!-- ===== LAYER 4 ===== -->
+<section>
+  <span class="layer-badge layer-4">第四层</span>
+  <h2>领域设计初见端倪</h2>
+  <p style="font-size:0.8em; color:#ccc;">从 <span style="color:#82aaff;">"这个技术怎么用"</span> 变成 <span style="color:#ffd700;">"这个业务需要什么能力"</span></p>
+  <div class="dir-tree">
+    <span class="folder">Conan/</span><br>
+    ├── <span class="folder">conan-commerce-order/</span>&nbsp;&nbsp;&nbsp;<span class="desc"># 交易域</span><br>
+    ├── <span class="folder">conan-commerce-product/</span>&nbsp;<span class="desc"># 商品域</span><br>
+    ├── <span class="folder">conan-fulfill/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="desc"># 履约域</span><br>
+    ├── <span class="folder">conan-third-pay/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="desc"># 支付域</span><br>
+    ├── <span class="folder">conan-user-center/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="desc"># 用户域</span><br>
+    └── <span class="folder">conan-growth-*/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="desc"># 增长域</span>
+  </div>
+  <p style="font-size:0.7em; color:#667eea; font-weight:600;">结构不是技术框架决定的，而是业务边界决定的</p>
+</section>
+
+<section>
+  <span class="layer-badge layer-4">第四层</span>
+  <h2>充血模型 vs 贫血模型</h2>
+  <div class="code-box">
+    <span class="keyword">public class</span> <span class="type">Order</span> {<br>
+    &nbsp;&nbsp;<span class="keyword">private</span> BigDecimal price, paidFee, refundedFee;<br><br>
+    &nbsp;&nbsp;<span class="comment">/** 校验支付价格是否合法 */</span><br>
+    &nbsp;&nbsp;<span class="keyword">public boolean</span> <span class="type">isInValidPaidFee</span>() { ... }<br><br>
+    &nbsp;&nbsp;<span class="comment">/** 订单是否有支付行为 */</span><br>
+    &nbsp;&nbsp;<span class="keyword">public boolean</span> <span class="type">hasPayAction</span>(Payment p) { ... }<br><br>
+    &nbsp;&nbsp;<span class="comment">/** 是否允许退款 */</span><br>
+    &nbsp;&nbsp;<span class="keyword">public boolean</span> <span class="type">isAllowToRefund</span>(List&lt;Refundment&gt; r) { ... }<br>
+    }
+  </div>
+  <p style="font-size:0.7em; color:#ccc;">领域对象不只是数据容器，还包含<span class="highlight">业务逻辑</span></p>
+</section>
+
+<!-- ===== LAYER 5 ===== -->
+<section>
+  <span class="layer-badge layer-5">第五层</span>
+  <h2>领域本质 — 看见业务全貌</h2>
+  <div class="flow">
+    <span class="flow-step" style="background:rgba(255,106,136,0.15); border:1px solid rgba(255,106,136,0.3);">售前</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(255,106,136,0.15); border:1px solid rgba(255,106,136,0.3);">售卖</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(255,106,136,0.15); border:1px solid rgba(255,106,136,0.3);">下单</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(255,106,136,0.15); border:1px solid rgba(255,106,136,0.3);">支付</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(255,106,136,0.15); border:1px solid rgba(255,106,136,0.3);">履约</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step" style="background:rgba(255,106,136,0.15); border:1px solid rgba(255,106,136,0.3);">交付</span>
+  </div>
+  <div class="domain-grid" style="margin-top:30px;">
+    <div class="domain-card" style="border-color:rgba(255,106,136,0.3);"><h4 style="color:#ff6a88;">商品域</h4><p>管理"卖什么" — SKU、价格、上下架</p></div>
+    <div class="domain-card" style="border-color:rgba(255,106,136,0.3);"><h4 style="color:#ff6a88;">交易域</h4><p>管理"怎么买" — 优惠、订单状态流转</p></div>
+    <div class="domain-card" style="border-color:rgba(255,106,136,0.3);"><h4 style="color:#ff6a88;">支付域</h4><p>管理"怎么付" — 支付渠道、状态同步</p></div>
+    <div class="domain-card" style="border-color:rgba(255,106,136,0.3);"><h4 style="color:#ff6a88;">履约域</h4><p>管理"怎么交付" — 学期、老师、内容</p></div>
+  </div>
+</section>
+
+<section>
+  <span class="layer-badge layer-5">第五层</span>
+  <h2>领域间的协作边界</h2>
+  <ul class="clean pink">
+    <li>交易域<span class="highlight-blue">不关心</span>商品具体内容，只关心"这个 SKU 能不能卖、卖多少钱"</li>
+    <li>支付域<span class="highlight-blue">不关心</span>用户买了什么，只关心"这笔钱收没收到"</li>
+    <li>履约域<span class="highlight-blue">不关心</span>订单怎么创建的，只关心"支付成功后我该交付什么"</li>
+  </ul>
+  <p style="font-size:0.75em; color:#ff6a88; margin-top:30px; font-weight:700;">
+    技术方案是服务于领域边界的，而不是反过来
+  </p>
+</section>
+
+<!-- ===== NEW: Common Mistakes ===== -->
+<section>
+  <h2>没有领域意识时容易犯的错误</h2>
+  <div class="domain-grid">
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.4);">
+      <h4 style="color:#ff5050;">错误 1：在错误的地方加缓存</h4>
+      <p><span style="color:#ff5050;">&#10008;</span> "接口慢，加个 Redis 缓存吧"<br>→ 数据不一致、缓存穿透、维护成本飙升</p>
+      <p style="color:#43e97b; margin-top:8px;"><span>&#10004;</span> 先问"为什么慢"，可能需要优化查询或调整领域边界</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.4);">
+      <h4 style="color:#ff5050;">错误 2：业务逻辑放错位置</h4>
+      <p><span style="color:#ff5050;">&#10008;</span> 退款判断写在 Controller 里<br>→ 多入口重复、逻辑不一致、难以测试</p>
+      <p style="color:#43e97b; margin-top:8px;"><span>&#10004;</span> 封装在 Order 领域对象：order.isAllowToRefund()</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.4);">
+      <h4 style="color:#ff5050;">错误 3：跨域直接访问数据</h4>
+      <p><span style="color:#ff5050;">&#10008;</span> 履约服务直接查订单表<br>→ 领域边界被打破、数据模型耦合</p>
+      <p style="color:#43e97b; margin-top:8px;"><span>&#10004;</span> 通过订单服务接口获取，只依赖接口契约</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.4);">
+      <h4 style="color:#ff5050;">错误 4：用技术方案代替领域设计</h4>
+      <p><span style="color:#ff5050;">&#10008;</span> "发短信、Push、积分……用 MQ 解耦！"<br>→ 消息满天飞、处理顺序不可控</p>
+      <p style="color:#43e97b; margin-top:8px;"><span>&#10004;</span> 先想清楚谁负责编排，用领域事件而非零散消息</p>
+    </div>
+  </div>
+  <p style="font-size:0.7em; color:#ff5050; margin-top:15px; font-weight:600;">共同点：只关注技术实现，不关注业务本质</p>
+</section>
+
+<!-- ===== NEW: Real Capability ===== -->
+<section>
+  <h2>什么是真正的服务端能力</h2>
+  <ul class="clean blue">
+    <li><span class="highlight">技术可以学，框架会过时，但领域理解是你的护城河</span></li>
+    <li>Redis 可以换缓存方案，Java 可以换 Go/Rust<br>但"履约流程怎么运转""库存需要哪些边界"不会因技术栈变化而失效</li>
+    <li><span class="highlight-pink">领域专家比技术专家更稀缺</span> — 会写 Redis 代码的人很多，<br>理解"为什么这个场景需要这样设计缓存策略"的人很少</li>
+  </ul>
+  <p style="font-size:0.72em; color:#667eea; margin-top:25px; font-weight:700;">
+    技术深度应该服务于领域理解，而不是脱离业务自嗨<br>
+    最强的服务端工程师，是既懂技术又懂领域的人
+  </p>
+</section>
+
+<!-- ===== NEW: Five Layer Comparison Table ===== -->
+<section>
+  <h2>五层认知对比</h2>
+  <table style="width:90%; margin:20px auto; font-size:0.55em; border-collapse:separate; border-spacing:0; border-radius:12px; overflow:hidden;">
+    <thead>
+      <tr style="background:rgba(102,126,234,0.3);">
+        <th style="padding:12px 10px; text-align:left; font-weight:600;">阶段</th>
+        <th style="padding:12px 10px; text-align:left; font-weight:600;">核心认知</th>
+        <th style="padding:12px 10px; text-align:left; font-weight:600;">典型问题</th>
+        <th style="padding:12px 10px; text-align:left; font-weight:600;">突破点</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:rgba(67,233,123,0.08);"><td style="padding:10px;">1. CRUD 万能论</td><td style="padding:10px;">三层架构搞一切</td><td style="padding:10px;">复杂后难维护</td><td style="padding:10px;">接触架构规范</td></tr>
+      <tr style="background:rgba(246,211,101,0.08);"><td style="padding:10px;">2. 架构模式困惑</td><td style="padding:10px;">各种 O 眼花缭乱</td><td style="padding:10px;">感觉过度设计</td><td style="padding:10px;">理解边界隔离</td></tr>
+      <tr style="background:rgba(161,140,209,0.08);"><td style="padding:10px;">3. 中间件深水区</td><td style="padding:10px;">技术深度 = 能力</td><td style="padding:10px;">懂但不会用</td><td style="padding:10px;">思考"为什么用"</td></tr>
+      <tr style="background:rgba(102,126,234,0.08);"><td style="padding:10px;">4. 领域设计</td><td style="padding:10px;">从业务视角设计</td><td style="padding:10px;">缺乏全局理解</td><td style="padding:10px;">参与跨域协作</td></tr>
+      <tr style="background:rgba(255,106,136,0.08);"><td style="padding:10px;">5. 领域本质</td><td style="padding:10px;">领域是核心竞争力</td><td style="padding:10px;">—</td><td style="padding:10px;">持续深耕</td></tr>
+    </tbody>
+  </table>
+  <div class="flow" style="margin-top:20px;">
+    <span class="flow-step" style="font-size:0.55em;">CRUD 万能论</span>
+    <span class="flow-arrow" style="font-size:0.8em;">→</span>
+    <span class="flow-step" style="font-size:0.55em;">架构困惑</span>
+    <span class="flow-arrow" style="font-size:0.8em;">→</span>
+    <span class="flow-step" style="font-size:0.55em;">中间件深水区</span>
+    <span class="flow-arrow" style="font-size:0.8em;">→</span>
+    <span class="flow-step" style="font-size:0.55em;">领域设计</span>
+    <span class="flow-arrow" style="font-size:0.8em;">→</span>
+    <span class="flow-step" style="font-size:0.55em;">领域本质</span>
+  </div>
+</section>
+
+<!-- ===== NEW: Self-Diagnosis ===== -->
+<section>
+  <h2>你在哪个阶段？</h2>
+  <table style="width:88%; margin:20px auto; font-size:0.6em; border-collapse:separate; border-spacing:0; border-radius:12px; overflow:hidden;">
+    <thead>
+      <tr style="background:rgba(102,126,234,0.3);">
+        <th style="padding:12px 14px; text-align:left; font-weight:600;">问自己</th>
+        <th style="padding:12px 14px; text-align:left; font-weight:600; width:140px;">答"否"则</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:rgba(255,255,255,0.03);"><td style="padding:10px 14px;">我能解释为什么项目要用这种分层结构吗？</td><td style="padding:10px 14px; color:#43e97b;">还在第一层</td></tr>
+      <tr style="background:rgba(255,255,255,0.06);"><td style="padding:10px 14px;">我能说清各种 O 存在的价值，而不只是"规范要求"吗？</td><td style="padding:10px 14px; color:#f6d365;">还在第二层</td></tr>
+      <tr style="background:rgba(255,255,255,0.03);"><td style="padding:10px 14px;">用 Redis/MQ 时，我能说出"为什么用"而不只是"怎么用"吗？</td><td style="padding:10px 14px; color:#a18cd1;">还在第三层</td></tr>
+      <tr style="background:rgba(255,255,255,0.06);"><td style="padding:10px 14px;">我能画出业务涉及哪些领域、它们如何协作吗？</td><td style="padding:10px 14px; color:#667eea;">还在第四层</td></tr>
+      <tr style="background:rgba(255,255,255,0.03);"><td style="padding:10px 14px;">我能解释公司业务的完整链路、以及自己的位置吗？</td><td style="padding:10px 14px; color:#ff6a88;">走向第五层</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===== NEW: Stage-specific Advice ===== -->
+<section>
+  <h2>针对不同阶段的建议</h2>
+  <div class="domain-grid">
+    <div class="domain-card" style="border-color:rgba(67,233,123,0.3);">
+      <h4 style="color:#43e97b;">第一层：CRUD 舒适区</h4>
+      <p>主动接触复杂项目<br>遇到难维护先想分层问题<br>读懂好项目的目录结构</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(246,211,101,0.3);">
+      <h4 style="color:#f6d365;">第二层：规范困扰</h4>
+      <p>理解规范在解决什么问题<br>维护 2 年以上系统体会分层价值<br>故意不分层感受后果</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(161,140,209,0.3);">
+      <h4 style="color:#a18cd1;">第三层：沉迷技术</h4>
+      <p>每学一个技术点问：什么场景会用？<br>答案是"面试"就往后放<br>花同样时间理解业务收益更大</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(102,126,234,0.3);">
+      <h4 style="color:#82aaff;">第四层 & 第五层</h4>
+      <p>参与跨域需求、画领域地图<br>多和产品/业务聊"为什么"<br>沉淀领域知识、帮助新人</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NEW: Spiral Growth ===== -->
+<section>
+  <h2>核心原则：螺旋上升</h2>
+  <p style="font-size:0.75em; color:#ccc; margin-bottom:25px;">技术深度和领域宽度需要<span class="highlight">交替螺旋上升</span></p>
+  <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin:0 auto;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="background:rgba(102,126,234,0.2); border:1px solid rgba(102,126,234,0.4); padding:10px 18px; border-radius:10px; font-size:0.6em;">技术深度 Lv.1</span>
+      <span class="flow-arrow">→</span>
+      <span style="background:rgba(255,106,136,0.2); border:1px solid rgba(255,106,136,0.4); padding:10px 18px; border-radius:10px; font-size:0.6em;">领域理解 Lv.1</span>
+    </div>
+    <span style="font-size:1.2em; color:#667eea;">↓</span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="background:rgba(102,126,234,0.3); border:1px solid rgba(102,126,234,0.5); padding:10px 18px; border-radius:10px; font-size:0.6em;">技术深度 Lv.2</span>
+      <span class="flow-arrow">→</span>
+      <span style="background:rgba(255,106,136,0.3); border:1px solid rgba(255,106,136,0.5); padding:10px 18px; border-radius:10px; font-size:0.6em;">领域理解 Lv.2</span>
+    </div>
+    <span style="font-size:1.2em; color:#667eea;">↓</span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="background:rgba(102,126,234,0.4); border:1px solid rgba(102,126,234,0.6); padding:10px 18px; border-radius:10px; font-size:0.6em;">技术深度 Lv.3</span>
+      <span class="flow-arrow">→</span>
+      <span style="background:rgba(255,106,136,0.4); border:1px solid rgba(255,106,136,0.6); padding:10px 18px; border-radius:10px; font-size:0.6em;">领域理解 Lv.3</span>
+    </div>
+  </div>
+  <p style="font-size:0.65em; color:#aaa; margin-top:25px; line-height:1.6;">每一次技术深入，都应该是为了解决当前领域问题<br>每一次领域拓展，都会暴露新的技术瓶颈</p>
+</section>
+
+<!-- Slide: Takeaway -->
+<section>
+  <h2 style="margin-bottom: 40px;">核心 Takeaway</h2>
+  <p class="takeaway">服务端的本质不是技术<br>而是领域</p>
+  <p style="font-size:0.75em; color:#aaa; margin-top:40px; max-width:75%; margin-left:auto; margin-right:auto; line-height:1.7;">
+    技术是你实现领域逻辑的工具。<br>
+    工具可以换，但对领域的理解是你真正的核心竞争力。<br>
+    带着这个认知去学技术，你会更清楚每个技术点存在的意义。
+  </p>
+</section>
+
+<!-- Slide: Reading -->
+<section>
+  <h2>延伸阅读</h2>
+  <ul class="clean blue">
+    <li>《领域驱动设计》Eric Evans — DDD 的开山之作，理解领域建模的底层思想</li>
+    <li>《实现领域驱动设计》Vaughn Vernon — DDD 的落地实践指南</li>
+    <li>《凤凰架构》周志明 — 从单体到微服务的架构演进，大量实战案例</li>
+  </ul>
+</section>
+
+<!-- Slide: End -->
+<section class="end-slide">
+  <h1>Thanks</h1>
+  <p style="font-size:0.8em; color:#888; margin-top:30px;">你现在的困惑，每个服务端工程师都经历过。</p>
+</section>
+
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  controls: true,
+  progress: true,
+  center: true,
+  transition: 'slide',
+  width: 1280,
+  height: 720
+});
+</script>
+</body>
+</html>

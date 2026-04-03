@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务端链路地图：一次请求的一生</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root {
+  --r-main-font: 'Noto Sans SC', sans-serif;
+  --r-heading-font: 'Noto Sans SC', sans-serif;
+  --r-main-font-size: 32px;
+  --r-heading1-size: 2.2em;
+  --r-heading2-size: 1.6em;
+  --r-heading3-size: 1.2em;
+}
+.reveal { font-family: 'Noto Sans SC', sans-serif; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: 'Noto Sans SC', sans-serif; font-weight: 700; }
+.reveal h1 { font-size: 2.2em; }
+.reveal h2 { font-size: 1.5em; }
+.reveal h3 { font-size: 1.1em; }
+
+/* Cover */
+.cover-slide h1 { font-size: 2.4em; font-weight: 900; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3em; }
+.cover-slide .subtitle { font-size: 1.1em; color: #aaa; margin-bottom: 2em; }
+
+/* Station badge */
+.station-badge { display: inline-block; padding: 6px 20px; border-radius: 30px; font-size: 0.6em; font-weight: 500; margin-bottom: 0.5em; letter-spacing: 2px; }
+.station-0 { background: linear-gradient(135deg, #74ebd5, #acb6e5); color: #1a1a2e; }
+.station-1 { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a1a2e; }
+.station-2 { background: linear-gradient(135deg, #f6d365, #fda085); color: #1a1a2e; }
+.station-3 { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.station-4 { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #1a1a2e; }
+.station-cross { background: linear-gradient(135deg, #ff6a88, #ff99ac); color: #1a1a2e; }
+
+/* Quote */
+.quote-box { background: rgba(255,255,255,0.05); border-left: 4px solid #667eea; padding: 20px 30px; border-radius: 0 12px 12px 0; margin: 20px auto; max-width: 85%; text-align: left; font-size: 0.85em; font-style: italic; color: #ccc; }
+
+/* Code block */
+.code-box { background: #1e1e3f; border-radius: 12px; padding: 20px 30px; margin: 15px auto; max-width: 85%; text-align: left; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.65em; line-height: 1.6; color: #a9b7c6; overflow-x: auto; }
+.code-box .keyword { color: #c792ea; }
+.code-box .type { color: #82aaff; }
+.code-box .string { color: #c3e88d; }
+.code-box .comment { color: #546e7a; }
+.code-box .annotation { color: #ffcb6b; }
+
+/* Bullet list */
+.reveal ul.clean { list-style: none; padding: 0; text-align: left; max-width: 85%; margin: 0 auto; }
+.reveal ul.clean li { padding: 10px 0; font-size: 0.8em; line-height: 1.5; color: #ddd; position: relative; padding-left: 28px; }
+.reveal ul.clean li::before { content: ''; position: absolute; left: 0; top: 18px; width: 12px; height: 12px; border-radius: 50%; }
+.reveal ul.clean.cyan li::before { background: linear-gradient(135deg, #74ebd5, #acb6e5); }
+.reveal ul.clean.green li::before { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.reveal ul.clean.orange li::before { background: linear-gradient(135deg, #f6d365, #fda085); }
+.reveal ul.clean.purple li::before { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+.reveal ul.clean.blue li::before { background: linear-gradient(135deg, #667eea, #764ba2); }
+.reveal ul.clean.pink li::before { background: linear-gradient(135deg, #ff6a88, #ff99ac); }
+
+/* Highlight */
+.highlight { color: #ffd700; font-weight: 700; }
+.highlight-blue { color: #82aaff; font-weight: 700; }
+.highlight-green { color: #43e97b; font-weight: 700; }
+.highlight-pink { color: #ff6a88; font-weight: 700; }
+
+/* Grid table */
+.domain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 90%; margin: 20px auto; }
+.domain-card { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 18px 20px; text-align: left; border: 1px solid rgba(255,255,255,0.08); }
+.domain-card h4 { margin: 0 0 8px; font-size: 0.75em; }
+.domain-card p { margin: 0; font-size: 0.6em; color: #aaa; line-height: 1.5; }
+
+/* Flow diagram */
+.flow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 20px auto; flex-wrap: wrap; }
+.flow-step { background: rgba(255,255,255,0.08); padding: 12px 20px; border-radius: 10px; font-size: 0.7em; font-weight: 500; }
+.flow-arrow { font-size: 1.2em; color: #667eea; }
+
+/* Vertical flow */
+.vflow { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 20px auto; }
+.vflow-step { background: rgba(255,255,255,0.08); padding: 10px 24px; border-radius: 10px; font-size: 0.65em; font-weight: 500; min-width: 180px; text-align: center; }
+.vflow-arrow { font-size: 1em; color: #667eea; }
+
+/* Takeaway */
+.takeaway { font-size: 1.3em; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; max-width: 80%; margin: 0 auto; line-height: 1.6; }
+
+/* End slide */
+.end-slide h1 { font-size: 2.5em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Sequence diagram style */
+.seq-diagram { background: #1e1e3f; border-radius: 12px; padding: 20px 30px; margin: 15px auto; max-width: 90%; text-align: center; }
+.seq-diagram img { max-width: 100%; }
+
+/* Table */
+.reveal table.styled { width: 90%; margin: 20px auto; font-size: 0.55em; border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; }
+.reveal table.styled thead tr { background: rgba(102,126,234,0.3); }
+.reveal table.styled th { padding: 12px 10px; text-align: left; font-weight: 600; }
+.reveal table.styled td { padding: 10px; }
+.reveal table.styled tbody tr:nth-child(odd) { background: rgba(255,255,255,0.03); }
+.reveal table.styled tbody tr:nth-child(even) { background: rgba(255,255,255,0.06); }
+
+.small-text { font-size: 0.7em; color: #999; margin-top: 20px; }
+
+/* Compare box */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 90%; margin: 20px auto; }
+.compare-box { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 18px 20px; text-align: left; }
+.compare-box h4 { margin: 0 0 12px; font-size: 0.7em; }
+.compare-box ul { margin: 0; padding-left: 18px; font-size: 0.6em; color: #bbb; }
+.compare-box ul li { margin-bottom: 6px; }
+.compare-box.do { border: 1px solid rgba(67,233,123,0.3); }
+.compare-box.dont { border: 1px solid rgba(255,80,80,0.3); }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- Slide 1: Cover -->
+<section class="cover-slide">
+  <h1>服务端链路地图</h1>
+  <p class="subtitle">一次请求的一生：从入口到返回的完整旅程</p>
+</section>
+
+<!-- Slide 2: Opening Problem -->
+<section>
+  <h2>为什么学服务端会越学越乱？</h2>
+  <ul class="clean blue">
+    <li>今天学一点 Spring 注解</li>
+    <li>明天看一点 MySQL 索引</li>
+    <li>后天补一点 Redis</li>
+    <li>再过两天背一背 HTTP 状态码</li>
+  </ul>
+  <p style="font-size:0.75em; color:#aaa; margin-top:30px;">每个知识点单独看都能理解<br>但回到项目里，还是有很强的<span class="highlight">割裂感</span></p>
+</section>
+
+<!-- Slide 3: Root Cause -->
+<section>
+  <h2>根因：缺少一张链路地图</h2>
+  <div class="quote-box">
+    服务端的很多知识点，本质上都在回答同一个问题：<br><br>
+    <span style="color:#ffd700;">一个请求从外部进入系统之后，到底经过了谁；<br>每一层分别解决什么问题；出了问题应该在哪一层看。</span>
+  </div>
+  <p style="font-size:0.72em; color:#667eea; margin-top:25px; font-weight:600;">
+    如果这张图不清楚，学到的框架、组件、规范都会像散装零件<br>
+    如果这张图清楚了，后面的很多东西都会自动归位
+  </p>
+</section>
+
+<!-- Slide 4: Full Picture -->
+<section>
+  <h2>全景：一条请求到底经过谁</h2>
+  <div class="vflow">
+    <div class="vflow-step" style="background:rgba(116,235,213,0.15); border:1px solid rgba(116,235,213,0.3);">Client</div>
+    <div class="vflow-arrow">v</div>
+    <div class="vflow-step" style="background:rgba(67,233,123,0.15); border:1px solid rgba(67,233,123,0.3);">Gateway (入口治理)</div>
+    <div class="vflow-arrow">v</div>
+    <div class="vflow-step" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3);">Controller (协议适配)</div>
+    <div class="vflow-arrow">v</div>
+    <div class="vflow-step" style="background:rgba(102,126,234,0.15); border:1px solid rgba(102,126,234,0.3);">Service (业务编排)</div>
+    <div class="vflow-arrow">v</div>
+    <div class="vflow-step" style="background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.3);">Repository (数据访问)</div>
+    <div class="vflow-arrow">v</div>
+    <div class="vflow-step" style="background:rgba(255,255,255,0.08);">DB / Cache / External</div>
+  </div>
+  <p class="small-text">请求链路图不是目录结构图，而是<span class="highlight">职责流转图</span></p>
+</section>
+
+<!-- Slide 5: Core Insight -->
+<section>
+  <h2>第一个反直觉点</h2>
+  <p class="takeaway" style="font-size:1.1em; margin-top:40px;">
+    请求一定会经历<br>
+    "入口治理 -> 协议适配 -> 业务编排 -> 数据访问 -> 响应返回"<br>
+    这几个基本阶段
+  </p>
+  <p style="font-size:0.75em; color:#aaa; margin-top:35px;">
+    命名差异不会改变这个事实<br>
+    <span style="color:#82aaff;">真正重要的不是目录名字，而是职责边界</span>
+  </p>
+</section>
+
+<!-- ===== STATION 0 ===== -->
+<section>
+  <span class="station-badge station-0">第 0 站</span>
+  <h2>请求带来了什么</h2>
+  <div class="domain-grid">
+    <div class="domain-card"><h4 style="color:#74ebd5;">URL</h4><p>你要访问哪个资源</p></div>
+    <div class="domain-card"><h4 style="color:#acb6e5;">Method</h4><p>读取、创建、更新，还是删除</p></div>
+    <div class="domain-card"><h4 style="color:#74ebd5;">Headers</h4><p>身份、版本、设备、链路追踪等上下文</p></div>
+    <div class="domain-card"><h4 style="color:#acb6e5;">Body / Query</h4><p>真正的业务参数</p></div>
+  </div>
+  <p style="font-size:0.72em; color:#74ebd5; margin-top:20px; font-weight:600;">
+    服务端处理的从来不是一坨参数，而是一个带着上下文的请求
+  </p>
+</section>
+
+<section>
+  <span class="station-badge station-0">第 0 站</span>
+  <h2>服务端先要判断什么</h2>
+  <ul class="clean cyan">
+    <li>这个请求是<span class="highlight">谁</span>发来的</li>
+    <li>它想操作<span class="highlight">什么资源</span></li>
+    <li>它有没有<span class="highlight">资格</span>操作</li>
+    <li>这些参数是不是<span class="highlight">合法</span></li>
+    <li>这个动作在当前状态下是否<span class="highlight">允许</span></li>
+  </ul>
+  <p style="font-size:0.72em; color:#aaa; margin-top:25px;">
+    不是"拿到参数就写逻辑"，而是先判断请求的上下文
+  </p>
+</section>
+
+<!-- ===== STATION 1 ===== -->
+<section>
+  <span class="station-badge station-1">第 1 站</span>
+  <h2>入口层：网关的职责</h2>
+  <ul class="clean green">
+    <li><span class="highlight-green">路由</span> — 把请求转发到正确服务</li>
+    <li><span class="highlight-green">鉴权</span> — 先判断请求是否具备访问资格</li>
+    <li><span class="highlight-green">限流</span> — 在流量过大时保护后端服务</li>
+    <li><span class="highlight-green">统一日志</span> — 记录入口请求的基础信息</li>
+    <li><span class="highlight-green">灰度与流量策略</span> — 在不同版本/实例间做流量分配</li>
+  </ul>
+</section>
+
+<section>
+  <span class="station-badge station-1">第 1 站</span>
+  <h2>两类网关的区别</h2>
+  <table class="styled">
+    <thead>
+      <tr>
+        <th>类型</th>
+        <th>更关心什么</th>
+        <th>常见职责</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="color:#43e97b;">接入层网关<br><span style="font-size:0.85em; color:#888;">(Nginx / SLB)</span></td>
+        <td>流量接入与转发效率</td>
+        <td>反向代理、负载均衡、TLS 终止、静态资源</td>
+      </tr>
+      <tr>
+        <td style="color:#38f9d7;">业务网关<br><span style="font-size:0.85em; color:#888;">(API Gateway)</span></td>
+        <td>API 入口治理</td>
+        <td>鉴权、限流、灰度、统一日志、统一错误包装</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.7em; color:#43e97b; margin-top:20px; font-weight:600;">
+    网关负责入口治理，但不应该承载具体业务决策
+  </p>
+</section>
+
+<!-- ===== STATION 2 ===== -->
+<section>
+  <span class="station-badge station-2">第 2 站</span>
+  <h2>Controller：协议适配层</h2>
+  <div class="compare-grid">
+    <div class="compare-box do">
+      <h4 style="color:#43e97b;">应该做</h4>
+      <ul>
+        <li>接收路径参数、查询参数、请求体</li>
+        <li>做基础参数校验</li>
+        <li>调用应用层 / 业务层</li>
+        <li>把结果转换成统一响应结构</li>
+      </ul>
+    </div>
+    <div class="compare-box dont">
+      <h4 style="color:#ff5050;">不应该做</h4>
+      <ul>
+        <li>承载大量业务判断</li>
+        <li>编排多个下游依赖</li>
+        <li>控制事务边界</li>
+        <li>直接拼复杂 SQL 或操作数据库</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="station-badge station-2">第 2 站</span>
+  <h2>Controller 示例：克制的价值</h2>
+  <div class="code-box">
+    <span class="annotation">@RestController</span><br>
+    <span class="annotation">@RequestMapping</span>(<span class="string">"/api"</span>)<br>
+    <span class="keyword">public class</span> <span class="type">VersionInfoController</span> {<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="annotation">@Autowired</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">private</span> <span class="type">VersionInfoLogic</span> versionInfoLogic;<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="annotation">@GetMapping</span>(<span class="string">"/version-info"</span>)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public</span> <span class="type">RestResp</span>&lt;<span class="type">VersionInfoVO</span>&gt; get() {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> versionInfoLogic.get();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+    }
+  </div>
+  <p style="font-size:0.72em; color:#fda085; margin-top:15px; font-weight:600;">
+    离请求近，但离业务细节远
+  </p>
+</section>
+
+<!-- ===== STATION 3 ===== -->
+<section>
+  <span class="station-badge station-3">第 3 站</span>
+  <h2>Service：业务中枢</h2>
+  <ul class="clean blue">
+    <li><span class="highlight-blue">参数与上下文进一步校验</span></li>
+    <li><span class="highlight-blue">业务规则判断与流程编排</span></li>
+    <li><span class="highlight-blue">协调多个依赖并收束结果</span></li>
+  </ul>
+  <p style="font-size:0.75em; color:#aaa; margin-top:30px;">
+    这一层为什么最复杂？<br>
+    因为系统里的复杂度，本来就主要聚集在这里
+  </p>
+</section>
+
+<section>
+  <span class="station-badge station-3">第 3 站</span>
+  <h2>Service 示例：业务判断</h2>
+  <div class="code-box">
+    <span class="annotation">@Service</span><br>
+    <span class="keyword">public class</span> <span class="type">UserReadStatusLogicImpl</span> {<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">public</span> <span class="type">RestResp</span>&lt;Void&gt; clickRedPoint(<span class="keyword">long</span> userId, <span class="keyword">int</span> businessType) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// 校验请求参数</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (userId &lt;= 0) <span class="keyword">return</span> RestResp.error(<span class="string">"userId is invalid"</span>);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// 校验上下文一致性</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (userId != getUserId()) <span class="keyword">return</span> RestResp.error(<span class="string">"..."</span>);<br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// 组装业务条件对象</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">ReadStatusCondition</span> condition = <span class="keyword">new</span> <span class="type">ReadStatusCondition</span>();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;condition.setUserId(userId);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// 调用后端服务</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readStatusService.markReadStatusAsRead(condition);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> RestResp.success();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+    }
+  </div>
+</section>
+
+<section>
+  <span class="station-badge station-3">第 3 站</span>
+  <h2>Service 常见误区</h2>
+  <div class="quote-box">
+    Service 是业务中枢，不是万能垃圾桶
+  </div>
+  <ul class="clean blue">
+    <li>什么时候允许这个动作发生</li>
+    <li>需要改哪些状态</li>
+    <li>调用顺序是什么</li>
+    <li>哪一步失败应该回滚，哪一步失败应该补偿</li>
+  </ul>
+  <p style="font-size:0.72em; color:#667eea; margin-top:20px; font-weight:600;">
+    正确的分层不自动保证系统清晰<br>它只是给了你一个管理复杂度的机会
+  </p>
+</section>
+
+<!-- ===== STATION 4 ===== -->
+<section>
+  <span class="station-badge station-4">第 4 站</span>
+  <h2>Repository / Storage：数据访问层</h2>
+  <div class="compare-grid">
+    <div class="compare-box do">
+      <h4 style="color:#43e97b;">关心什么</h4>
+      <ul>
+        <li>根据条件查询数据</li>
+        <li>插入、更新、删除数据</li>
+        <li>隔离数据库访问细节</li>
+        <li>读写分离策略</li>
+      </ul>
+    </div>
+    <div class="compare-box dont">
+      <h4 style="color:#ff5050;">不关心什么</h4>
+      <ul>
+        <li>接口返回结构</li>
+        <li>页面展示逻辑</li>
+        <li>复杂业务决策</li>
+        <li>为什么要执行这个操作</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="station-badge station-4">第 4 站</span>
+  <h2>为什么要隔离数据访问</h2>
+  <div class="quote-box">
+    "直接在 Service 里写 SQL，不也能跑吗？"<br><br>
+    当然能跑。问题从来不是"能不能跑"，<br>
+    而是<span style="color:#ffd700;">"变化来了之后，系统还能不能稳"</span>
+  </div>
+  <ul class="clean purple" style="margin-top:25px;">
+    <li>表结构调整时，影响更可控</li>
+    <li>读写策略调整时，影响更可控</li>
+    <li>缓存、分库分表、索引优化介入时，影响更可控</li>
+  </ul>
+  <p style="font-size:0.72em; color:#a18cd1; margin-top:20px; font-weight:600;">
+    Repository 不是为了形式上的分层，而是为了隔离变化
+  </p>
+</section>
+
+<!-- ===== CROSS-CUTTING ===== -->
+<section>
+  <span class="station-badge station-cross">横切关注点</span>
+  <h2>链路的"神经系统"</h2>
+  <div style="display:flex; justify-content:center; align-items:stretch; gap:25px; margin:25px auto; max-width:95%;">
+    <!-- 左：主链路 -->
+    <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
+      <div style="font-size:0.65em; color:#888; margin-bottom:8px;">主链路</div>
+      <div style="background:rgba(67,233,123,0.15); border:1px solid rgba(67,233,123,0.3); border-radius:8px; padding:10px 20px; font-size:0.65em; color:#43e97b;">Gateway</div>
+      <div style="color:#667eea;">↓</div>
+      <div style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3); border-radius:8px; padding:10px 20px; font-size:0.65em; color:#f6d365;">Controller</div>
+      <div style="color:#667eea;">↓</div>
+      <div style="background:rgba(102,126,234,0.15); border:1px solid rgba(102,126,234,0.3); border-radius:8px; padding:10px 20px; font-size:0.65em; color:#82aaff;">Service</div>
+      <div style="color:#667eea;">↓</div>
+      <div style="background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.3); border-radius:8px; padding:10px 20px; font-size:0.65em; color:#a18cd1;">Repository</div>
+    </div>
+    <!-- 中：连接线区域 -->
+    <div style="display:flex; flex-direction:column; justify-content:center; gap:20px; padding:30px 0;">
+      <div style="border-top:2px dashed rgba(255,106,136,0.4); width:50px;"></div>
+      <div style="border-top:2px dashed rgba(255,106,136,0.4); width:50px;"></div>
+      <div style="border-top:2px dashed rgba(255,106,136,0.4); width:50px;"></div>
+    </div>
+    <!-- 右：横切关注点（分两组） -->
+    <div style="display:flex; gap:20px;">
+      <!-- 验证与控制 -->
+      <div style="min-width:150px;">
+        <div style="font-size:0.65em; font-weight:600; color:#f6d365; margin-bottom:12px; text-align:center;">验证与控制</div>
+        <div style="background:rgba(246,211,101,0.08); border:1px solid rgba(246,211,101,0.25); border-radius:10px; padding:12px 14px;">
+          <div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.65em; color:#f6d365;">参数校验 <span style="color:#777; font-size:0.85em;">· 拦截非法</span></div>
+          <div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.65em; color:#f6d365;">异常处理 <span style="color:#777; font-size:0.85em;">· 统一表达</span></div>
+          <div style="padding:8px 0; font-size:0.65em; color:#f6d365;">事务控制 <span style="color:#777; font-size:0.85em;">· 保证一致</span></div>
+        </div>
+      </div>
+      <!-- 观测与追踪 -->
+      <div style="min-width:150px;">
+        <div style="font-size:0.65em; font-weight:600; color:#82aaff; margin-bottom:12px; text-align:center;">观测与追踪</div>
+        <div style="background:rgba(130,170,255,0.08); border:1px solid rgba(130,170,255,0.25); border-radius:10px; padding:12px 14px;">
+          <div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.65em; color:#82aaff;">日志 <span style="color:#777; font-size:0.85em;">· 记录行为</span></div>
+          <div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.65em; color:#82aaff;">指标 <span style="color:#777; font-size:0.85em;">· 量化状态</span></div>
+          <div style="padding:8px 0; font-size:0.65em; color:#82aaff;">Trace <span style="color:#777; font-size:0.85em;">· 串联链路</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:0.7em; color:#aaa; margin-top:15px;">
+    横切关注点<span class="highlight">横跨多层</span>，不属于某一层独占
+  </p>
+</section>
+
+<section>
+  <span class="station-badge station-cross">横切关注点</span>
+  <h2>参数校验：分层处理</h2>
+  <div class="domain-grid">
+    <div class="domain-card" style="border-color:rgba(246,211,101,0.3);">
+      <h4 style="color:#f6d365;">协议层校验 (Controller)</h4>
+      <p>字段缺不缺、类型对不对、格式合不合法<br><br>越早挡住越好</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(102,126,234,0.3);">
+      <h4 style="color:#82aaff;">业务层校验 (Service)</h4>
+      <p>这个动作在当前状态下是否允许<br><br>需要结合业务上下文判断</p>
+    </div>
+  </div>
+  <p style="font-size:0.72em; color:#ff6a88; margin-top:20px; font-weight:600;">
+    好的校验，不是"都放一层"，而是按职责分层
+  </p>
+</section>
+
+<section>
+  <span class="station-badge station-cross">横切关注点</span>
+  <h2>异常处理：统一表达</h2>
+  <ul class="clean pink">
+    <li>哪些异常应该继续往上抛</li>
+    <li>哪些异常应该转成业务错误</li>
+    <li>最终用什么方式返回给调用方</li>
+  </ul>
+  <div class="quote-box" style="margin-top:25px;">
+    异常处理不是为了"把报错藏起来"<br>
+    而是为了让错误表达<span style="color:#ffd700;">稳定、可理解、可排查</span>
+  </div>
+</section>
+
+<section>
+  <span class="station-badge station-cross">横切关注点</span>
+  <h2>事务：放在业务编排层</h2>
+  <ul class="clean pink">
+    <li>事务保护的是一组<span class="highlight">必须一起成功或一起失败</span>的状态变更</li>
+    <li>更适合放在业务流程被编排的地方 (Service 层边界)</li>
+  </ul>
+  <div class="domain-grid" style="margin-top:25px;">
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">事务打在太底层</h4>
+      <p>只能保护局部<br>上层流程仍可能一半成功一半失败</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">事务边界拉得过大</h4>
+      <p>锁持有时间更长<br>并发能力更差，回滚范围过重</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="station-badge station-cross">横切关注点</span>
+  <h2>日志：不是出了错才打</h2>
+  <p style="font-size:0.75em; color:#ccc; margin-bottom:25px;">真正有价值的日志，至少要回答：</p>
+  <ul class="clean pink">
+    <li>请求来了没有</li>
+    <li>关键业务动作做了什么</li>
+    <li>结果是什么</li>
+    <li>如果失败，失败在什么环节</li>
+  </ul>
+  <p style="font-size:0.72em; color:#ff6a88; margin-top:25px; font-weight:600;">
+    日志不是"后补的排障工具"<br>而是系统对自身行为的一种结构化表达
+  </p>
+</section>
+
+<section>
+  <span class="station-badge station-cross">横切关注点</span>
+  <h2>Trace / Metrics：请求返回了不代表结束</h2>
+  <div class="quote-box">
+    在客户端，功能到"页面对了"就告一段落<br>
+    在服务端，功能到<span style="color:#ffd700;">"链路可观测了"</span>才算真正完成
+  </div>
+  <p style="font-size:0.75em; color:#aaa; margin-top:25px;">服务端要长期运行，要面对：</p>
+  <div class="flow">
+    <span class="flow-step">偶发超时</span>
+    <span class="flow-step">下游波动</span>
+    <span class="flow-step">流量高峰</span>
+    <span class="flow-step">线上脏数据</span>
+    <span class="flow-step">环境差异</span>
+  </div>
+</section>
+
+<section>
+  <h2>第二个反直觉点</h2>
+  <p class="takeaway" style="font-size:1.05em; margin-top:40px;">
+    一条请求真正结束<br>
+    不是它返回响应的时候<br>
+    而是它被系统可靠记录、可被解释、可被定位的时候
+  </p>
+</section>
+
+<!-- ===== MINIMAL EXAMPLE ===== -->
+<section>
+  <h2>最小案例：用户点击红点</h2>
+  <p style="font-size:0.75em; color:#aaa;">"用户点击红点，服务端把该状态标记为已读"</p>
+  <div class="flow" style="margin-top:30px;">
+    <span class="flow-step" style="background:rgba(116,235,213,0.15); border:1px solid rgba(116,235,213,0.3);">请求进入</span>
+    <span class="flow-arrow">-></span>
+    <span class="flow-step" style="background:rgba(67,233,123,0.15); border:1px solid rgba(67,233,123,0.3);">入口治理</span>
+    <span class="flow-arrow">-></span>
+    <span class="flow-step" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3);">Controller</span>
+    <span class="flow-arrow">-></span>
+    <span class="flow-step" style="background:rgba(102,126,234,0.15); border:1px solid rgba(102,126,234,0.3);">Service</span>
+    <span class="flow-arrow">-></span>
+    <span class="flow-step" style="background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.3);">Storage</span>
+    <span class="flow-arrow">-></span>
+    <span class="flow-step" style="background:rgba(255,255,255,0.08);">DB</span>
+  </div>
+  <p style="font-size:0.72em; color:#667eea; margin-top:25px; font-weight:600;">
+    看起来只是一个"点红点"的小动作<br>
+    背后仍然经过了完整的链路职责分工
+  </p>
+</section>
+
+<section>
+  <h2>最小案例：每一步做什么</h2>
+  <table class="styled">
+    <thead>
+      <tr>
+        <th>环节</th>
+        <th>职责</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:#74ebd5;">入口层</td><td>路由、鉴权、限流、记录入口日志</td></tr>
+      <tr><td style="color:#f6d365;">Controller</td><td>从路径/参数里取值，调用业务层</td></tr>
+      <tr><td style="color:#82aaff;">Service</td><td>校验参数、校验上下文一致性、组装条件对象、调后端服务</td></tr>
+      <tr><td style="color:#a18cd1;">Storage</td><td>把条件转成 SQL，执行更新，返回结果</td></tr>
+      <tr><td style="color:#ccc;">响应返回</td><td>组装统一响应、记录日志、串联 Trace</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===== COMMON MISTAKES ===== -->
+<section>
+  <h2>常见误区</h2>
+  <div class="domain-grid">
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">误区 1</h4>
+      <p><span style="color:#ffd700;">接口能返回 = 功能做完了</span><br><br>
+      不代表参数校验合理、错误表达稳定、日志足够定位、链路可观测</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">误区 2</h4>
+      <p><span style="color:#ffd700;">分层只是套路</span><br><br>
+      不同层在隔离不同类型的变化：协议变化、业务编排变化、数据访问变化</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">误区 3</h4>
+      <p><span style="color:#ffd700;">日志、监控、Trace 是后补的</span><br><br>
+      这些能力不是上线后补丁，而是链路设计的一部分</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">误区 4</h4>
+      <p><span style="color:#ffd700;">网关、鉴权、限流不属于主链路</span><br><br>
+      请求不是从 Controller 开始的，很多请求根本到不了 Controller</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CORE TAKEAWAY ===== -->
+<section>
+  <h2 style="margin-bottom: 40px;">核心 Takeaway</h2>
+  <p class="takeaway">大多数服务端问题<br>不是出在某一行代码写错了<br>而是出在链路中某个职责放错了位置</p>
+</section>
+
+<section>
+  <h2>真正理解链路，学到的是判断力</h2>
+  <ul class="clean blue">
+    <li>这段逻辑应该放在哪一层？</li>
+    <li>这类错误应该在哪一层处理？</li>
+    <li>这个能力属于业务逻辑，还是入口治理，还是数据访问？</li>
+    <li>当线上出问题时，我应该先去哪一层看？</li>
+  </ul>
+  <p style="font-size:0.75em; color:#aaa; margin-top:30px;">
+    有了这张链路地图，后面学 HTTP、Java、Spring、MySQL、Redis、MQ<br>
+    都不会觉得是在讲不同世界的事情
+  </p>
+</section>
+
+<section>
+  <h2>它们都在服务于同一件事</h2>
+  <p class="takeaway" style="font-size:1.05em; margin-top:50px;">
+    让一条请求<br>
+    能够正确地进入系统<br>
+    正确地流经系统<br>
+    正确地离开系统
+  </p>
+</section>
+
+<!-- Slide: End -->
+<section class="end-slide">
+  <h1>Thanks</h1>
+  <p style="font-size:0.8em; color:#888; margin-top:30px;">先有地图，再学零件，一切才能归位。</p>
+</section>
+
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  controls: true,
+  progress: true,
+  center: true,
+  transition: 'slide',
+  width: 1280,
+  height: 720
+});
+</script>
+</body>
+</html>

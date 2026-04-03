@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MySQL、事务与数据建模基础</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root {
+  --r-main-font: 'Noto Sans SC', sans-serif;
+  --r-heading-font: 'Noto Sans SC', sans-serif;
+  --r-main-font-size: 32px;
+}
+.reveal { font-family: 'Noto Sans SC', sans-serif; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: 'Noto Sans SC', sans-serif; font-weight: 700; }
+.reveal h1 { font-size: 2.2em; }
+.reveal h2 { font-size: 1.5em; }
+.reveal h3 { font-size: 1.1em; }
+
+/* Cover */
+.cover-slide h1 { font-size: 2.2em; font-weight: 900; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3em; }
+.cover-slide .subtitle { font-size: 1.1em; color: #aaa; margin-bottom: 2em; }
+
+/* Section badge */
+.section-badge { display: inline-block; padding: 6px 20px; border-radius: 30px; font-size: 0.6em; font-weight: 500; margin-bottom: 0.5em; letter-spacing: 2px; }
+.badge-domain { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a1a2e; }
+.badge-data { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+.badge-tx { background: linear-gradient(135deg, #f6d365, #fda085); color: #1a1a2e; }
+.badge-practice { background: linear-gradient(135deg, #ff6a88, #ff99ac); color: #1a1a2e; }
+
+/* Quote */
+.quote-box { background: rgba(255,255,255,0.05); border-left: 4px solid #667eea; padding: 15px 25px; border-radius: 0 12px 12px 0; margin: 15px auto; max-width: 85%; text-align: left; font-size: 0.8em; font-style: italic; color: #ccc; }
+
+/* Code block */
+.code-box { background: #1e1e3f; border-radius: 12px; padding: 15px 25px; margin: 12px auto; max-width: 88%; text-align: left; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.52em; line-height: 1.5; color: #a9b7c6; overflow-x: auto; }
+.code-box .keyword { color: #c792ea; }
+.code-box .type { color: #82aaff; }
+.code-box .string { color: #c3e88d; }
+.code-box .comment { color: #546e7a; }
+.code-box .annotation { color: #ffcb6b; }
+
+/* Bullet list */
+.reveal ul.clean { list-style: none; padding: 0; text-align: left; max-width: 85%; margin: 0 auto; }
+.reveal ul.clean li { padding: 8px 0; font-size: 0.75em; line-height: 1.4; color: #ddd; position: relative; padding-left: 24px; }
+.reveal ul.clean li::before { content: ''; position: absolute; left: 0; top: 14px; width: 10px; height: 10px; border-radius: 50%; }
+.reveal ul.clean.green li::before { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.reveal ul.clean.orange li::before { background: linear-gradient(135deg, #f6d365, #fda085); }
+.reveal ul.clean.purple li::before { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+.reveal ul.clean.blue li::before { background: linear-gradient(135deg, #667eea, #764ba2); }
+.reveal ul.clean.pink li::before { background: linear-gradient(135deg, #ff6a88, #ff99ac); }
+
+/* Highlight */
+.highlight { color: #ffd700; font-weight: 700; }
+.highlight-blue { color: #82aaff; font-weight: 700; }
+.highlight-green { color: #43e97b; font-weight: 700; }
+.highlight-pink { color: #ff6a88; font-weight: 700; }
+
+/* Grid */
+.domain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 90%; margin: 15px auto; }
+.domain-card { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 14px 16px; text-align: left; border: 1px solid rgba(255,255,255,0.08); }
+.domain-card h4 { margin: 0 0 6px; font-size: 0.68em; }
+.domain-card p { margin: 0; font-size: 0.55em; color: #aaa; line-height: 1.4; }
+
+/* Flow */
+.flow { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 15px auto; flex-wrap: wrap; }
+.flow-step { background: rgba(255,255,255,0.08); padding: 10px 16px; border-radius: 8px; font-size: 0.65em; font-weight: 500; }
+.flow-arrow { font-size: 1em; color: #667eea; }
+
+/* Takeaway */
+.takeaway { font-size: 1.2em; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; max-width: 80%; margin: 0 auto; line-height: 1.5; }
+
+/* End slide */
+.end-slide h1 { font-size: 2.5em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Table */
+.reveal table.styled { width: 90%; margin: 15px auto; font-size: 0.5em; border-collapse: separate; border-spacing: 0; border-radius: 10px; overflow: hidden; }
+.reveal table.styled thead tr { background: rgba(102,126,234,0.3); }
+.reveal table.styled th { padding: 10px 8px; text-align: left; font-weight: 600; }
+.reveal table.styled td { padding: 8px; }
+.reveal table.styled tbody tr:nth-child(odd) { background: rgba(255,255,255,0.03); }
+.reveal table.styled tbody tr:nth-child(even) { background: rgba(255,255,255,0.06); }
+
+/* Compare box */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 90%; margin: 15px auto; }
+.compare-box { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px 16px; text-align: left; }
+.compare-box h4 { margin: 0 0 10px; font-size: 0.65em; }
+.compare-box ul { margin: 0; padding-left: 16px; font-size: 0.55em; color: #bbb; }
+.compare-box ul li { margin-bottom: 4px; }
+.compare-box.do { border: 1px solid rgba(67,233,123,0.3); }
+.compare-box.dont { border: 1px solid rgba(255,80,80,0.3); }
+
+/* Layer diagram */
+.layer-diagram { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 15px auto; }
+.layer-box { padding: 10px 25px; border-radius: 8px; font-size: 0.6em; font-weight: 500; min-width: 180px; text-align: center; }
+.layer-arrow { color: #667eea; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- Slide 1: Cover -->
+<section class="cover-slide">
+  <h1>MySQL、事务与数据建模基础</h1>
+  <p class="subtitle">状态的最终落点</p>
+</section>
+
+<!-- Slide 2: Context (merged 2-3) -->
+<section>
+  <h2>这一篇要解决什么问题</h2>
+  <div class="flow" style="margin-bottom:20px;">
+    <span class="flow-step">服务端在解决什么问题</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">请求怎么流动</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">对外接口设计</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">进程内代码组织</span>
+  </div>
+  <p style="font-size:0.75em; color:#aaa;">第五篇自然要继续往下收：这些业务动作、状态变化和分层职责，最后到底落在哪里？</p>
+  <p class="takeaway" style="font-size:1em; margin-top:25px;">
+    落在数据库，落在数据模型，落在一致性边界
+  </p>
+</section>
+
+<!-- Slide 3: Two Modeling (merged 4-5) -->
+<section>
+  <h2>先分清两层建模</h2>
+  <div style="display:flex; justify-content:center; align-items:stretch; gap:20px; margin:20px auto; max-width:92%;">
+    <div style="flex:1; max-width:300px; display:flex; flex-direction:column;">
+      <div style="font-size:0.68em; font-weight:600; color:#43e97b; margin-bottom:10px; text-align:center;">领域建模</div>
+      <div style="background:rgba(67,233,123,0.08); border:1px solid rgba(67,233,123,0.25); border-radius:10px; padding:12px; flex:1;">
+        <div style="font-size:0.55em; color:#bbb; line-height:1.7; text-align:left;">
+          • 业务上有什么对象、状态、动作<br>
+          • 更关心业务语义是否清楚<br>
+          • 产物：业务对象、状态机、规则边界
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; font-size:1em; color:#667eea;">vs</div>
+    <div style="flex:1; max-width:300px; display:flex; flex-direction:column;">
+      <div style="font-size:0.68em; font-weight:600; color:#82aaff; margin-bottom:10px; text-align:center;">数据建模</div>
+      <div style="background:rgba(102,126,234,0.08); border:1px solid rgba(102,126,234,0.25); border-radius:10px; padding:12px; flex:1;">
+        <div style="font-size:0.55em; color:#bbb; line-height:1.7; text-align:left;">
+          • 怎么落成表、字段、唯一键、索引<br>
+          • 更关心存储和查询是否可靠高效<br>
+          • 产物：表结构、主键、状态字段、索引
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:0.65em; color:#aaa; margin-top:15px;">
+    两者经常相关，但不一一对应：一个业务对象可能对应多张表，一个业务动作可能改多条数据
+  </p>
+</section>
+
+<!-- ===== Part 1: Domain Modeling ===== -->
+<section>
+  <span class="section-badge badge-domain">第一部分</span>
+  <h2>先讲领域建模</h2>
+  <p class="takeaway" style="font-size:1em; margin-top:50px;">
+    先想清楚业务里<br>
+    到底有什么对象
+  </p>
+</section>
+
+<!-- Slide 5: Domain Questions + Example (merged 7-8) -->
+<section>
+  <span class="section-badge badge-domain">领域建模</span>
+  <h2>先问清楚这些问题</h2>
+  <div class="compare-grid">
+    <div class="compare-box do" style="border-color:rgba(67,233,123,0.3);">
+      <h4 style="color:#43e97b;">切入方式</h4>
+      <ul>
+        <li>这个业务里真正被管理的"东西"是什么</li>
+        <li>它是长期存在的，还是一次性过程数据</li>
+        <li>调用方关心对象本身，还是对象的某种状态</li>
+      </ul>
+    </div>
+    <div class="compare-box do" style="border-color:rgba(102,126,234,0.3);">
+      <h4 style="color:#82aaff;">例：学习计划场景</h4>
+      <ul>
+        <li>学习计划本身</li>
+        <li>计划状态 PENDING / CONFIRMED / INTERRUPTED</li>
+        <li>学习进度（层、周、节）</li>
+        <li>周计划版本、变更日志</li>
+      </ul>
+    </div>
+  </div>
+  <p style="font-size:0.68em; color:#43e97b; margin-top:15px; font-weight:600;">
+    所谓"一个功能"，实际往往不是一个对象，而是一组相关状态
+  </p>
+</section>
+
+<!-- Slide 6: State + Action (merged 9-10) -->
+<section>
+  <span class="section-badge badge-domain">领域建模</span>
+  <h2>状态设计 + 业务动作</h2>
+  <div class="compare-grid">
+    <div class="compare-box" style="border-color:rgba(67,233,123,0.3);">
+      <h4 style="color:#43e97b;">状态设计很容易被低估</h4>
+      <ul>
+        <li>工程代码看起来：创建、更新、查询</li>
+        <li>业务语义上：有效/无效、已读/未读、已存在/不存在</li>
+        <li><span style="color:#43e97b;">这些状态不是数据库顺手带上的，它们本身就是业务的一部分</span></li>
+      </ul>
+    </div>
+    <div class="compare-box" style="border-color:rgba(246,211,101,0.3);">
+      <h4 style="color:#f6d365;">业务动作比单张表更重要</h4>
+      <ul>
+        <li>不要只盯着表：更新 plan、插入 version、记录 log</li>
+        <li>真正的动作：确认计划、修改长期计划并追加版本、中断计划</li>
+        <li><span style="color:#f6d365;">这些动作才是应该先被理解、先被保护的</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Part 2: Data Modeling ===== -->
+<section>
+  <span class="section-badge badge-data">第二部分</span>
+  <h2>再讲数据建模</h2>
+  <p class="takeaway" style="font-size:1em; margin-top:50px;">
+    数据库里到底<br>
+    怎么承接它
+  </p>
+</section>
+
+<!-- Slide 8: Data Modeling Elements -->
+<section>
+  <span class="section-badge badge-data">数据建模</span>
+  <h2>数据建模不是存字段，而是承接业务</h2>
+  <table class="styled">
+    <thead>
+      <tr><th>元素</th><th>常见作用</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:#82aaff;">主键</td><td>标识一条记录</td></tr>
+      <tr><td style="color:#82aaff;">唯一键</td><td>防重、幂等、避免重复创建</td></tr>
+      <tr><td style="color:#82aaff;">状态字段</td><td>承接业务状态变化</td></tr>
+      <tr><td style="color:#82aaff;">时间字段</td><td>表达创建、更新时间，支持排序和排查</td></tr>
+      <tr><td style="color:#82aaff;">索引</td><td>控制查询代价和访问路径</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.65em; color:#667eea; margin-top:15px; font-weight:600;">
+    一个业务对象的完整语义，未必都在一张表里（主表 + 版本表 + 日志表）
+  </p>
+</section>
+
+<!-- Slide 9: Query Shapes Model (merged 13-15) -->
+<section>
+  <span class="section-badge badge-data">数据建模</span>
+  <h2>查询方式会反过来塑造数据模型</h2>
+  <div class="code-box">
+    <span class="type">String</span> sql = <span class="string">"SELECT "</span> + COLUMNS + <span class="string">" FROM "</span> + TABLE +<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">" WHERE userId = :userId AND effectiveDate <= :date "</span> +<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="string">" ORDER BY effectiveDate DESC, id DESC LIMIT 1"</span>;
+  </div>
+  <ul class="clean blue" style="margin-top:15px;">
+    <li>为什么要按 effectiveDate DESC, id DESC 双字段排序</li>
+    <li>"当前有效版本"本身就是一个业务查询语义，不只是查最新一条</li>
+  </ul>
+  <div class="quote-box" style="margin-top:15px;">
+    很多人先建表后写查询，但真实项目经常反过来：<span style="color:#ffd700;">要支持怎样的查询，最后会倒逼你怎样建模</span>
+  </div>
+</section>
+
+<!-- ===== Part 3: Transaction ===== -->
+<section>
+  <span class="section-badge badge-tx">第三部分</span>
+  <h2>最后讲事务与一致性边界</h2>
+  <p class="takeaway" style="font-size:1em; margin-top:50px;">
+    这个业务动作<br>
+    最少要保护到什么程度
+  </p>
+</section>
+
+<!-- Slide 11: Transaction Protection (merged 17-18) -->
+<section>
+  <span class="section-badge badge-tx">事务</span>
+  <h2>事务到底在保护什么</h2>
+  <div class="quote-box">
+    事务最容易被误解成一个抽象定义题。在工程里，它更像是在回答：<br>
+    <span style="color:#ffd700;">这个业务动作，最少要保护到什么程度，才不至于把系统状态写坏</span>
+  </div>
+  <p style="font-size:0.7em; color:#aaa; margin-top:20px;">学习计划这条链上的动作：</p>
+  <div class="flow">
+    <span class="flow-step" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3);">确认学习计划</span>
+    <span class="flow-step" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3);">修改计划并追加版本</span>
+    <span class="flow-step" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3);">中断计划</span>
+    <span class="flow-step" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3);">状态变化后补推</span>
+  </div>
+  <p style="font-size:0.65em; color:#f6d365; margin-top:15px; font-weight:600;">
+    哪些必须一起成功，哪些允许稍后补上，哪些靠幂等重试兜住 — 这才是事务要回答的问题
+  </p>
+</section>
+
+<!-- Slide 12: Different Tools -->
+<section>
+  <span class="section-badge badge-tx">事务</span>
+  <h2>几种常见手段，不是在解决同一个问题</h2>
+  <table class="styled">
+    <thead>
+      <tr><th>手段</th><th>更适合保护什么</th></tr>
+    </thead>
+    <tbody>
+      <tr><td style="color:#f6d365;">数据库事务</td><td>同一个本地数据库边界里的原子性</td></tr>
+      <tr><td style="color:#f6d365;">应用层锁</td><td>并发竞争下的串行化执行</td></tr>
+      <tr><td style="color:#f6d365;">条件更新</td><td>防止状态被错误覆盖</td></tr>
+      <tr><td style="color:#f6d365;">事件驱动后的最终一致性</td><td>主数据写完后再推进派生数据</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Slide 13: Code + Big Transaction (merged 20-21) -->
+<section>
+  <span class="section-badge badge-tx">事务</span>
+  <h2>代码示例：confirmPlan</h2>
+  <div class="code-box">
+    <span class="keyword">boolean</span> success = studyPlanService.update(userId, updateParam);<br>
+    <span class="keyword">if</span> (success) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;plan.confirm();<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="type">ScheduleVersion</span> version = plan.addScheduleVersion(schedule, effectiveDate, ...);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;studyPlanService.addScheduleVersion(userId, version);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;changeLogService.logLongTermChange(userId, beforeSnapshot, afterSnapshot, ...);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;publishLongTermPlanStatusChanged(userId, plan.getLessonId());<br>
+    }
+  </div>
+  <p style="font-size:0.65em; color:#aaa; margin-top:12px;">
+    事务真正要保护的，不是"几条 SQL"，而是"确认计划"这个动作本身
+  </p>
+  <p style="font-size:0.65em; color:#ff6a88; margin-top:8px; font-weight:600;">
+    为什么不是"包大事务"就更安全？边界过大会导致：锁持有时间变长、可恢复性变差、错误原因更难定位
+  </p>
+</section>
+
+<!-- ===== Example (merged 22-23) ===== -->
+<section>
+  <span class="section-badge badge-practice">最小工程案例</span>
+  <h2>从学习计划到版本、日志和状态变化</h2>
+  <div class="layer-diagram">
+    <div class="layer-box" style="background:rgba(246,211,101,0.15); border:1px solid rgba(246,211,101,0.3); color:#f6d365;">业务动作层：StudyPlanManagerImpl</div>
+    <div class="layer-arrow">↓</div>
+    <div class="layer-box" style="background:rgba(102,126,234,0.15); border:1px solid rgba(102,126,234,0.3); color:#82aaff;">主数据落库：StudyPlanStorageImpl</div>
+    <div class="layer-arrow">↓</div>
+    <div class="layer-box" style="background:rgba(161,140,209,0.15); border:1px solid rgba(161,140,209,0.3); color:#a18cd1;">版本表与变更日志：ScheduleVersionStorage / ChangeLogStorage</div>
+    <div class="layer-arrow">↓</div>
+    <div class="layer-box" style="background:rgba(255,106,136,0.15); border:1px solid rgba(255,106,136,0.3); color:#ff6a88;">状态变化后处理：ProcessService</div>
+  </div>
+  <p style="font-size:0.6em; color:#aaa; margin-top:12px;">
+    业务动作先于表操作 · 事务边界贴着动作来定 · 一个业务对象不一定只靠主表承接 · 数据库内一致性和后续流程一致性不是一回事
+  </p>
+</section>
+
+<!-- ===== Pitfalls ===== -->
+<section>
+  <span class="section-badge badge-practice">常见误区</span>
+  <h2>五个典型问题</h2>
+  <div class="domain-grid">
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">把建模理解成"先把表建出来"</h4>
+      <p>导致后面所有语义都只能往表上硬贴</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">把事务理解成"能包就都包进去"</h4>
+      <p>通常不是更安全，而是更难维护</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">把索引理解成"性能差了再补"</h4>
+      <p>很多查询代价在接口设计刚出来时就已经注定</p>
+    </div>
+    <div class="domain-card" style="border-color:rgba(255,80,80,0.3);">
+      <h4 style="color:#ff5050;">把状态字段、唯一键当成实现细节</h4>
+      <p>这些往往正是业务约束落地的地方</p>
+    </div>
+  </div>
+  <p style="font-size:0.65em; color:#ff6a88; margin-top:12px; font-weight:600;">
+    把领域建模和数据建模混成一件事 → 业务对象被表结构牵着走，表结构又承接不了真实业务动作
+  </p>
+</section>
+
+<!-- ===== Takeaway ===== -->
+<section>
+  <h2>希望形成的感觉</h2>
+  <ul class="clean blue">
+    <li>写服务端需求时，不只看接口和代码，还会先想<span class="highlight-green">业务对象和状态</span></li>
+    <li>设计表结构时，不只想字段怎么存，还会想<span class="highlight">唯一约束、状态字段、索引和查询代价</span></li>
+    <li>设计事务边界时，不只想"包没包起来"，还会想它到底在<span class="highlight-blue">保护哪个业务动作</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2 style="margin-bottom: 40px;">核心 Takeaway</h2>
+  <p class="takeaway">数据库不再只是<br>"最后存一下"的地方<br><br>而是系统状态的<br>最终落点</p>
+</section>
+
+<!-- Slide: End -->
+<section class="end-slide">
+  <h1>Thanks</h1>
+  <p style="font-size:0.8em; color:#888; margin-top:30px;">领域建模 + 数据建模 + 一致性边界</p>
+</section>
+
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  controls: true,
+  progress: true,
+  center: true,
+  transition: 'slide',
+  width: 1280,
+  height: 720
+});
+</script>
+</body>
+</html>

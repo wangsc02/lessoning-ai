@@ -37,13 +37,15 @@ Part2 --> Part3[Part3_DomainAndProjects]
 
 - 目录：`agent-client/part2-internal-infra/README.md`
 - 定位：把“懂通用服务端”过渡到“能在公司环境里稳定交付”
-- 当前状态：先保留结构，等内部文章输入后再补全
+- 篇数：`1` 篇前言 + `6` 篇实操手册
+- 能力链：环境搭建 → 工程规范 → 运行时接入 → CI/CD 发布 → 线上观测 → 故障处理
 
-### Part 3：公司内部领域与项目总结
+### Part 3：业务领域导航与工程入口
 
 - 目录：`agent-client/part3-domain-and-projects/README.md`
-- 定位：把通用能力落到真实业务，补齐领域语言、系统边界、项目取舍
-- 当前状态：先保留结构，等具体项目输入后再补全
+- 定位：不重写领域知识，而是做领域知识的**索引层 + 工程桥接层**
+- 与"零一说"的关系：零一说讲"业务是什么"，Part 3 补"作为工程师怎么进入这个领域"
+- 三层结构：业务全景地图（1 篇）→ 领域工程入口卡片（每团队 1 页）→ 跨领域共性认知（1-2 篇）
 
 ## 1 个月学习节奏
 
@@ -77,17 +79,15 @@ Week3 --> Week4[Week4_稳定性与交付]
 
 因为对工程团队来说，Agent 不是“更聪明的脚本”，而是一个更依赖契约、观测、测试和边界控制的系统。没有服务端基础，后面的 Agent 工程很容易只剩“会调模型”，却没有稳定交付能力。
 
-## 当前交付物
-
-这一轮先交付 3 类文档骨架：
+## 当前进度
 
 - 总索引：当前文件
-- Part 1 必修版目录：`agent-client/part1-server-foundations/README.md`
-- Part 2 占位结构：`agent-client/part2-internal-infra/README.md`
-- Part 3 占位结构：`agent-client/part3-domain-and-projects/README.md`
+- Part 1 目录：`agent-client/part1-server-foundations/README.md`
+- Part 1 正文：`agent-client/part1-server-foundations/`（8 篇必修，已完成）
+- Part 2 正文：`agent-client/part2-internal-infra/`（1 篇前言 + 6 篇手册，已完成）
+- Part 3 结构：`agent-client/part3-domain-and-projects/`（进行中）
 
-## 下一步怎么继续
+## 下一步
 
-- 如果确认 Part 1 的 8 篇目录和顺序没有问题，就可以开始逐篇写正文
-- 等你提供公司内部文章后，再把 Part 2 从“结构占位”升级成正式目录
-- 等你提供具体项目后，再把 Part 3 做成“领域地图 + 项目案例 + 故障剧本”的组合
+- 按“地图 + 卡片 + 共性认知”三层结构，逐步补全 Part 3 各领域内容
+- 每个领域的工程入口卡片需要对应团队参与校准
